@@ -11,6 +11,8 @@ library(tidyverse)
 library(lubridate)
 library(readxl)
 Afiliados_31_12_2020 <- read_excel("Afiliados_31_12_2020.xlsx")
+Pensionados_31_12_2020 <- read_excel("Pensionados_31_12_2020.xlsx")
+
 
 
 
