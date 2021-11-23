@@ -12,9 +12,26 @@ library(lubridate)
 library(readxl)
 Afiliados_31_12_2020 <- read_excel("Afiliados_31_12_2020.xlsx")
 Pensionados_31_12_2020 <- read_excel("Pensionados_31_12_2020.xlsx")
+tabla_mortalidad_mujeres<-read_excel("tabla_mortalidad_mujeres.xlsx")
+tabla_mortalidad_hombres<-read_excel("tabla_mortalidad_hombres.xlsx")
+```
 
 
 
+```{r}
+#Se calcula la edad cumplida de la personas
+dia_de_evaluacion<-as.Date('31/12/2020',format='%d/%m/%Y')
+edad<-floor(time_length(difftime(
+    dia_de_evaluacion,
+    as.Date(as.POSIXct(Afiliados_31_12_2020$FEC_NACIMIENTO),'UTC')),'years'))
+Afiliados_31_12_2020<-Afiliados_31_12_2020%>%mutate(FEC_INGRESO=paste(substr(FEC_INGRESO,1,4),
+                    '/',substr(FEC_INGRESO,5,6),'/',substr(FEC_INGRESO,7,8),sep=''))
+antiguedad<-time_length(difftime(
+            dia_de_evaluacion,
+            as.Date(Afiliados_31_12_2020$FEC_INGRESO,
+            '%Y/%m/%d')),
+            'years')
+Afiliados_31_12_2020<-Afiliados_31_12_2020%>%mutate('Edad'=edad,'Antiguedad'=antiguedad)
 
 ```
 
@@ -46,10 +63,18 @@ Pensionados_31_12_2020 <- read_excel("Pensionados_31_12_2020.xlsx")
 ###tabla es la tabla de mortalidad, debe ser dinámica
 ###j tiempo posterior al año de partida
 qx<-function(edad,ano,tabla,tiempo){
-    prob_muerte<-
-
+    prob_muerte<-tabla[ano+1,edad+1]
+    return(return)
 }
 
+
+
+#Se programa una funcion la cual se encarga de calcular el 
+#monto de cada persona e irla sumando a la cantidad para ver
+#costo de una simulación
+costo<-function(ano,tabla,base_polizas){
+    
+}
 
 ```
 
