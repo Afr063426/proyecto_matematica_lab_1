@@ -1,3 +1,30 @@
+---
+title: "Untitled"
+author: "varios"
+date: "23/11/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(lubridate)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ```{r}
 #Se procede a programar el modelo estocasticos
