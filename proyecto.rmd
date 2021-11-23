@@ -1,0 +1,21 @@
+
+```{r}
+#Se procede a programar el modelo estocasticos
+##Primero se procede a programar una funcion la cual determina
+##la probabilidad de que la persona muera en ese año
+##La idea sería ver cual es la probabilidad de que la persona
+##en esa edad x se muera en ese mismo año, para pasar
+##este parametro a otra funcion la cual simula si la persona
+##muere o no
+###Recibe la parámetros
+###edad puede ser un vector
+###ano este es el año en el que se quiere hacer la evaluacion
+###tabla es la tabla de mortalidad, debe ser dinámica
+###j tiempo posterior al año de partida
+qx<-function(edad,ano,tabla,tiempo){
+    prob_muerte<-
+
+}
+
+
+```
