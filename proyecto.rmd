@@ -9,6 +9,10 @@ output: pdf_document
 knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(lubridate)
+library(readxl)
+Afiliados_31_12_2020 <- read_excel("Afiliados_31_12_2020.xlsx")
+
+
 
 ```
 
@@ -24,7 +28,7 @@ library(lubridate)
 
 
 
-
+## Analisis estadistico
 
 ```{r}
 #Se procede a programar el modelo estocasticos
@@ -46,3 +50,57 @@ qx<-function(edad,ano,tabla,tiempo){
 
 
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Deterministico
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Estocastico
+
+
+
+
+
+
+
+
+
