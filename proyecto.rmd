@@ -81,8 +81,9 @@ Pensionados_31_12_2020<-Pensionados_31_12_2020%>%mutate('Edad'=edad,'T_Pension'=
 ###tabla es la tabla de mortalidad, debe ser dinámica
 ###j tiempo posterior al año de partida
 qx<-function(edad,anho,tabla,tiempo){
-    prob_muerte<-tabla[as.numeric(colnames(tabla)[-1])==anho,edad+tiempo]
-    return(return)
+    entrada<-which(as.numeric(colnames(tabla)[-1])==anho)
+    prob_muerte<-tabla[entrada+tiempo,edad+tiempo]
+    return(as.numeric(prob_muerte))
 }
 
 antiguedad<-function(n){
@@ -94,7 +95,7 @@ antiguedad<-function(n){
         1+(n>10 & n<=20)+ #Retorna el monto lumpsum
         (n>20 & n<=30)*2+
         (n>30 & n<=40)*3+
-        (n>40)*4,
+        (n>40)*4
         )
     )
 }
@@ -134,7 +135,7 @@ costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descuento,inflacion,
         j<-1
 
         while(simulacion>0 & edad<jubilacion){
-            vivos<-sum(rbinom(simulacion,1,1-qx(edad,anho,tabla,j-1)))
+            vivos<-sum(rbinom(simulacion,1,1-qx(edad,anho,tabla,j)))
 
             muertos<-simulacion-vivos
 
@@ -149,7 +150,7 @@ costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descuento,inflacion,
         } 
          aux<-aux*2000000
 
-         ultimo_salario<-base_de_datos$Devengado[i]*aumento_nominal^j
+         ultimo_salario<-base_de_datos$DEVENGADO[i]*aumento_nominal^j
          antiguedad<-antiguedad(base_de_datos$Antiguedad[i])
          pension<-antiguedad[1]*ultimo_salario
 
@@ -157,6 +158,7 @@ costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descuento,inflacion,
          +v^j*pension(anho,edad,tabla,t_descuento,j,pension,m,simulacion,seguro=1000000,inflacion)
 
          suma<-suma+aux/simulaciones
+         print(cambio)
         
     }
     return(suma)
@@ -258,7 +260,7 @@ costo_plan<-function(anho,mujeres,hombres,t_descuento,inflacion,aumento,afiliado
 ##Prueba de simulacion se ecirbe para evitar perdida de datos
 calculo_prueba<-costo_plan(2021,tabla_mortalidad_mujeres,tabla_mortalidad_hombres,0.06,0.03,0.02,Afiliados_31_12_2020,
                 Pensionados_31_12_2020,1000,12)
-write.table(calculo_prueba,file="prueba.txt",sep="")
+write.ta1ble(calculo_prueba,file="prueba.txt",sep="")
 
 ```
 
