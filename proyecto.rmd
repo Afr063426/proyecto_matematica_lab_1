@@ -7,19 +7,62 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+options(scipen = 999)
+library(lifecontingencies)
 library(tidyverse)
 library(lubridate)
 library(readxl)
+
+
 Afiliados_31_12_2020 <- read_excel("Afiliados_31_12_2020.xlsx")
 Pensionados_31_12_2020 <- read_excel("Pensionados_31_12_2020.xlsx")
-tabla_mortalidad_mujeres<-read_excel("tabla_mortalidad_mujeres.xlsx")
-tabla_mortalidad_hombres<-read_excel("tabla_mortalidad_hombres.xlsx")
 
-TablaDinamica_lxsHombres <- read_excel("TablaDinamica-lxs.xls", 
-    sheet = "Hombres")
-TablaDinamica_lxsMUjeres <- read_excel("TablaDinamica-lxs.xls", 
-    sheet = "Mujeres")
 
+TablaDinamica_lxsHombres <- as.data.frame(read_excel("TablaDinamica-lxs.xls", 
+    sheet = "Hombres"))
+TablaDinamica_lxsMujeres <- as.data.frame(read_excel("TablaDinamica-lxs.xls", 
+    sheet = "Mujeres"))
+
+
+
+#Se genera lista con las tablas de los hombres
+
+ListaDeTablasHombres <- list()
+
+
+for (j in 1:(length(TablaDinamica_lxsHombres)-1)){
+    
+    ListaDeTablasHombres[[j]] <- c(with(TablaDinamica_lxsHombres,
+                       new(
+                         "actuarialtable",
+                         interest = 0.08,
+                         x = TablaDinamica_lxsHombres[,1],
+                         lx = TablaDinamica_lxsHombres[,j+1] ,
+                         name = paste("E",(j-1), sep = "")
+                       )))
+}
+names(ListaDeTablasHombres)<-paste("E",seq(0,115), sep = "")
+
+
+#Se genera lista con las tablas de las mujeres
+
+ListaDeTablasMujeres <- list()
+for (j in 1:(length(TablaDinamica_lxsMujeres)-1)){
+    
+    ListaDeTablasMujeres[[j]] <- c(with(TablaDinamica_lxsMujeres,
+                       new(
+                         "actuarialtable",
+                         interest = 0.08,
+                         x = TablaDinamica_lxsMujeres[,1],
+                         lx = TablaDinamica_lxsMujeres[,j+1] ,
+                         name = paste("E",(j-1), sep = "")
+                       )))
+}
+names(ListaDeTablasMujeres)<-paste("E",seq(0,115), sep = "")
+
+#Se elimina las tablas de las mujeres
+
+rm(TablaDinamica_lxsHombres, TablaDinamica_lxsMujeres)
 ```
 
 
