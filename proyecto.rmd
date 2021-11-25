@@ -204,7 +204,7 @@ costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descuento,inflacion,
             j<-j+1
 
         } 
-         print(edad)
+         #print(edad)
          aux<-aux*2000000
          ultimo_salario<-devengado*aumento_nominal^j
          antiguedad<-antiguedad(Antiguedad)
@@ -302,8 +302,8 @@ costo_plan<-function(anho,mujeres,hombres,t_descuento,inflacion,aumento,afiliado
 
     pen_hombres<-pensionados%>%filter(SEX=="M")
 
-    sumar_mujeres%<-%costo_afiliados_seguro(anho,mujeres,afil_mujeres,t_descuento,inflacion,aumento,62,simulaciones,m)+pensionados(anho,mujeres,pen_mujeres,t_descuento,j=1,m,simulaciones,seguro=1000000,inflacion)
-sumar_hombres%<-%costo_afiliados_seguro(anho,hombres,afil_hombres,t_descuento,inflacion,aumento,62,simulaciones,m)+pensionados(anho,hombres,pen_hombres,t_descuento,j=1,m,simulaciones,seguro=1000000,inflacion)
+    sumar_mujeres<-costo_afiliados_seguro(anho,mujeres,afil_mujeres,t_descuento,inflacion,aumento,62,simulaciones,m)+pensionados(anho,mujeres,pen_mujeres,t_descuento,j=1,m,simulaciones,seguro=1000000,inflacion)
+sumar_hombres<-costo_afiliados_seguro(anho,hombres,afil_hombres,t_descuento,inflacion,aumento,62,simulaciones,m)+pensionados(anho,hombres,pen_hombres,t_descuento,j=1,m,simulaciones,seguro=1000000,inflacion)
     return(sumar_mujeres+sumar_hombres)
 }
 
@@ -316,7 +316,7 @@ sumar_hombres%<-%costo_afiliados_seguro(anho,hombres,afil_hombres,t_descuento,in
 
 
 calculo_prueba<-costo_plan(2021,tabla_mortalidad_mujeres,tabla_mortalidad_hombres,0.06,0.03,0.02,Afiliados_31_12_2020,
-                Pensionados_31_12_2020,1000,12)
+                Pensionados_31_12_2020,2000,12)
 
 write.table(calculo_prueba,file="prueba.txt",sep="")
 ```
