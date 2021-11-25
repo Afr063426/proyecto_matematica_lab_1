@@ -62,20 +62,136 @@ Afiliados_31_12_2020<-Afiliados_31_12_2020%>%mutate('Edad'=edad,'Antiguedad'=ant
 ###ano este es el año en el que se quiere hacer la evaluacion
 ###tabla es la tabla de mortalidad, debe ser dinámica
 ###j tiempo posterior al año de partida
-qx<-function(edad,ano,tabla,tiempo){
-    prob_muerte<-tabla[ano+1,edad+1]
+qx<-function(edad,anho,tabla,tiempo){
+    prob_muerte<-tabla[anho+1,edad+1]
     return(return)
 }
 
-
+antiguedad<-function(n){
+    return(c(
+        (n>10 & n<=20)*0.45+ ##Rettonra el porcentaje de pension
+        (n>20 & n<=30)*0.65+
+        (n>30 & n<=40)*0.85+
+        (n>40),
+        1+(n>10 & n<=20)+ #Retorna el monto lumpsum
+        (n>20 & n<=30)*2+
+        (n>30 & n<=40)*3+
+        (n>40)*4,
+        )
+    )
+}
 
 #Se programa una funcion la cual se encarga de calcular el 
 #monto de cada persona e irla sumando a la cantidad para ver
 #costo de una simulación
-costo<-function(ano,tabla,base_polizas){
+#Se asume distribucion uniforma de muertes
+#Aplicar la funcion para hombres y otra para 
+#mujeres
+#base_de_datos corresponde a la base de 
+#afiliados la cual se otoroga
+#t_descuento corresponde a la tasa nominal de 
+#de descuento
+#inflacion es la inflacion 
+#La jubilacion va por persona
+#A pesar de que esto es el seguro de costos 
+#funerarios, se programa una funcion a parte para la pension
+costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descueto,inflacion,crecimiento_real,aumento,jubilacion,simulaciones){
+    edades<-base_de_datos$Edad
+
+    suma<-0
+
+    v<-1/(1+t_descuento)
+
+    aumento_nominal<-(1+inflacion+aumento)
     
+    for(i in 1:nrow(base_de_datos)){
+         aux<-0
+
+        edad<-edades[i]
+
+        simulacion<-simulaciones
+
+        vivos<-0
+
+        j<-1
+
+        while(simulacion>0 & edad<jubilacion){
+            vivos<-sum(rbinom(simulacion,1,1-qx(edad,anho,tabla,j)))
+
+            muertos<-simulacion-vivos
+
+            simulacion<-vivos
+
+            aux<-aux+v^j*muertos
+
+            edad<-edad+j
+
+            j<-j+1
+
+        } 
+         aux<-aux*2000000
+
+         ultimo_salario<-base_de_datos$Devengado[i]*aumento_nominal^j
+
+         antiguedad<-antiguedad(base_de_datos$Antiguedad[i])
+
+         aux<-aux+antiguedad[2]*ultimo_salario*simulacion*v^j
+         +v^j*pension(simulacion,j,anho,tabla,t_descuento,edad,ultimo_salario,seguro)
+
+         suma<-suma+aux/simulaciones
+        
+    }
+    return(suma)
 }
 
+
+
+##Se procede a programar una funcion la cual permite calcular el monto de la pension
+##la idea esta funcion es que la funcion costos_afiliados_envie la cantidad de la poblacion
+##ha sobrevivido hasta el momento
+##Se le deben pasar el parametro simulacion que indica la cantidad de sobrevivientes hasta
+##ese momento
+##El momento es el momento j
+##El anhno tambien debe ser pasado, para poder ubicarse en la tabla de mortalidad
+##Tambien se le deben pasar la inflacion y tambien tasa de descuento
+pension<-function(anho,edad,tabla,t_decuento,j,salario,m,simulaciones,seguro=1000000,inflacion){
+    simulacion<-simulaciones
+
+    meses<-1
+
+    suma<-0
+
+    k<-0
+
+    salario<-salario
+
+    muertos<-0
+
+    v<-1/((1+t_descuento)^(1/m))
+
+    while(simulacion>0){
+        vivos<-sum(rbinom(simulacion,1,1-meses/12*qx(edad,anho,tabla,j)))
+
+        muertos<-muertos+simulacion-vivos
+
+        simulacion<-vivos
+
+        suma<-suma+salario*v^(meses+k)*vivos
+
+        k<-k+(meses==12)
+
+        meses<-(meses==12)+(meses<12)*(1+meses)
+
+        suma<-suma+muertos*v^(k)*seguro*(meses==12)
+
+        muertos<-muertos*(meses<12)+0
+        
+        j<-j+(meses==12)
+
+        salario<-salario*(1+inflacion)^(meses==12)
+    }
+    return(suma)
+}
 ```
 
 
