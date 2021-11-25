@@ -32,7 +32,24 @@ antiguedad<-time_length(difftime(
             '%Y/%m/%d')),
             'years')
 Afiliados_31_12_2020<-Afiliados_31_12_2020%>%mutate('Edad'=edad,'Antiguedad'=antiguedad)
+#Se calcula edad de los pensionados
+Pensionados_31_12_2020<-Pensionados_31_12_2020%>%mutate(FEC_NAC=paste(substr(FEC_NAC,1,4),
+                    '/',substr(FEC_NAC,5,6),'/',substr(FEC_NAC,7,8),sep=''))
+Pensionados_31_12_2020<-Pensionados_31_12_2020%>%mutate(FEC_RIG_PEN=paste(substr(FEC_RIG_PEN,1,4),
+                    '/',substr(FEC_RIG_PEN,5,6),'/',substr(FEC_RIG_PEN,7,8),sep=''))
+edad<-floor(time_length(difftime(
+            dia_de_evaluacion,
+            as.Date(Pensionados_31_12_2020$FEC_NAC,
+            '%Y/%m/%d')),
+            'years'))
+tiempo_pension<-floor(time_length(difftime(
+            dia_de_evaluacion,
+            as.Date(Pensionados_31_12_2020$FEC_RIG_PEN,
+            '%Y/%m/%d')),
+            'years'))
 
+Pensionados_31_12_2020<-Pensionados_31_12_2020%>%mutate('Edad'=edad,'T_Pension'=tiempo_pension)
+##Consultar a la profe si el monto de la pension que aparece de cuando es
 ```
 
 
@@ -50,6 +67,7 @@ Afiliados_31_12_2020<-Afiliados_31_12_2020%>%mutate('Edad'=edad,'Antiguedad'=ant
 ## Analisis estadistico
 
 ```{r}
+#La idea del codigo es basarse en el paradigma de divide y venceras
 #Se procede a programar el modelo estocasticos
 ##Primero se procede a programar una funcion la cual determina
 ##la probabilidad de que la persona muera en ese año
@@ -63,7 +81,7 @@ Afiliados_31_12_2020<-Afiliados_31_12_2020%>%mutate('Edad'=edad,'Antiguedad'=ant
 ###tabla es la tabla de mortalidad, debe ser dinámica
 ###j tiempo posterior al año de partida
 qx<-function(edad,anho,tabla,tiempo){
-    prob_muerte<-tabla[anho+1,edad+1]
+    prob_muerte<-tabla[as.numeric(colnames(tabla)[-1])==anho,edad+tiempo]
     return(return)
 }
 
@@ -95,7 +113,7 @@ antiguedad<-function(n){
 #La jubilacion va por persona
 #A pesar de que esto es el seguro de costos 
 #funerarios, se programa una funcion a parte para la pension
-costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descueto,inflacion,crecimiento_real,aumento,jubilacion,simulaciones){
+costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descuento,inflacion,aumento,jubilacion,simulaciones,m){
     edades<-base_de_datos$Edad
 
     suma<-0
@@ -116,7 +134,7 @@ costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descueto,inflacion,c
         j<-1
 
         while(simulacion>0 & edad<jubilacion){
-            vivos<-sum(rbinom(simulacion,1,1-qx(edad,anho,tabla,j)))
+            vivos<-sum(rbinom(simulacion,1,1-qx(edad,anho,tabla,j-1)))
 
             muertos<-simulacion-vivos
 
@@ -132,11 +150,11 @@ costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descueto,inflacion,c
          aux<-aux*2000000
 
          ultimo_salario<-base_de_datos$Devengado[i]*aumento_nominal^j
-
          antiguedad<-antiguedad(base_de_datos$Antiguedad[i])
+         pension<-antiguedad[1]*ultimo_salario
 
          aux<-aux+antiguedad[2]*ultimo_salario*simulacion*v^j
-         +v^j*pension(simulacion,j,anho,tabla,t_descuento,edad,ultimo_salario,seguro)
+         +v^j*pension(anho,edad,tabla,t_descuento,j,pension,m,simulacion,seguro=1000000,inflacion)
 
          suma<-suma+aux/simulaciones
         
@@ -154,7 +172,7 @@ costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descueto,inflacion,c
 ##El momento es el momento j
 ##El anhno tambien debe ser pasado, para poder ubicarse en la tabla de mortalidad
 ##Tambien se le deben pasar la inflacion y tambien tasa de descuento
-pension<-function(anho,edad,tabla,t_decuento,j,salario,m,simulaciones,seguro=1000000,inflacion){
+pension<-function(anho,edad,tabla,t_descuento,j,salario,m,simulaciones,seguro=1000000,inflacion){
     simulacion<-simulaciones
 
     meses<-1
@@ -182,7 +200,7 @@ pension<-function(anho,edad,tabla,t_decuento,j,salario,m,simulaciones,seguro=100
 
         meses<-(meses==12)+(meses<12)*(1+meses)
 
-        suma<-suma+muertos*v^(k)*seguro*(meses==12)
+        suma<-suma+muertos*v^(k+1)*seguro*(meses==12)
 
         muertos<-muertos*(meses<12)+0
         
@@ -192,6 +210,56 @@ pension<-function(anho,edad,tabla,t_decuento,j,salario,m,simulaciones,seguro=100
     }
     return(suma)
 }
+
+
+##Se procede a programar una funcion para la base de pensionados que usa lo programado
+#en la funcion programada 
+pensionados<-function(anho,tabla,base_de_datos,t_descuento,
+j,m,simulaciones,seguro=1000000,inflacion){
+    suma<-0
+    aux<-0  
+    for(i in 1:nrow(tabla)){
+        edad<-base_de_datos$FEC_NAC[i]
+        salario<-base_de_datos$MON_PENSION #Consulta hay que ajustar la pension o no
+        suma<-suma+pension(anho,edad,tabla,t_descuento,
+        j,salario,m,simulaciones,seguro=1000000,inflacion)/simulaciones
+    }
+    return(suma)
+}
+
+```
+
+
+```{r}
+#A partir de lo anterior se procede a programar una funcion la cual 
+#calcula el costo de la pension a apartir de las dos funciones anteriores
+#debe recibir las dos bases de datos de afiliados y la base de pensionados
+#y todos los parametros que recibe la pension de costo de afiliados
+costo_plan<-function(anho,mujeres,hombres,t_descuento,inflacion,aumento,afiliados,pensionados,simulaciones,m){
+    afil_mujeres<-afiliados%>%filter(SEXO=="F")
+
+    afil_hombres<-afiliados%>%filter(SEXO=="M")
+
+    pen_mujeres<-pensionados%>%filter(SEX=="F")
+
+    pen_hombres<-pensionados%>%filter(SEX=="M")
+
+    sumar_mujeres<-costo_afiliados_seguro(anho,mujeres,afil_mujeres,t_descuento,inflacion,aumento,62,simulaciones,m)
+                    +pensionados(anho,mujeres,pen_mujeres,t_descuento,1,m,simulaciones,seguro=1000000,inflacion)
+    sumar_hombres<-costo_afiliados_seguro(anho,hombres,afil_hombres,t_descuento,inflacion,aumento,65,simulaciones,m)
+                    +pensionados(anho,hombres,pen_hombres,t_descuento,1,m,simulaciones,seguro=1000000,inflacion)
+    return(suma_hombres+suma_mujeres)
+}
+
+```
+
+
+```{r}
+##Prueba de simulacion se ecirbe para evitar perdida de datos
+calculo_prueba<-costo_plan(2021,tabla_mortalidad_mujeres,tabla_mortalidad_hombres,0.06,0.03,0.02,Afiliados_31_12_2020,
+                Pensionados_31_12_2020,1000,12)
+write.table(calculo_prueba,file="prueba.txt",sep="")
+
 ```
 
 
