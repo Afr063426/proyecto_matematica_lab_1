@@ -12,6 +12,8 @@ library(lifecontingencies)
 library(tidyverse)
 library(lubridate)
 library(readxl)
+library(kableExtra)
+
 
 
 Afiliados_31_12_2020 <- read_excel("Afiliados_31_12_2020.xlsx")
@@ -98,7 +100,7 @@ tiempo_pension<-floor(time_length(difftime(
             'years'))
 
 Pensionados_31_12_2020<-Pensionados_31_12_2020%>%mutate('Edad'=edad,'T_Pension'=tiempo_pension)
-##Consultar a la profe si el monto de la pension que aparece de cuando es
+
 ```
 
 
@@ -115,6 +117,51 @@ Pensionados_31_12_2020<-Pensionados_31_12_2020%>%mutate('Edad'=edad,'T_Pension'=
 
 ## Analisis estadistico
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Deterministico
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Estocastico
 ```{r}
 #La idea del codigo es basarse en el paradigma de divide y venceras
 #Se procede a programar el modelo estocasticos
@@ -131,7 +178,7 @@ Pensionados_31_12_2020<-Pensionados_31_12_2020%>%mutate('Edad'=edad,'T_Pension'=
 ###j tiempo posterior al año de partida
 qx<-function(edad,anho,tabla,tiempo){
     entrada<-which(as.numeric(colnames(tabla)[-1])==anho)
-    prob_muerte<-tabla[entrada+tiempo,edad+tiempo]
+    prob_muerte<-tabla[edad+tiempo,entrada+tiempo]
     return(as.numeric(prob_muerte))
 }
 
@@ -165,17 +212,17 @@ antiguedad<-function(n){
 #funerarios, se programa una funcion a parte para la pension
 costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descuento,inflacion,aumento,jubilacion,simulaciones,m){
     edades<-base_de_datos$Edad
-
-    suma<-0
+    antiguedades<-base_de_datos$Antiguedad
+    devengados<-base_de_datos$DEVENGADO
 
     v<-1/(1+t_descuento)
 
     aumento_nominal<-(1+inflacion+aumento)
+    fn1<-function(edad,Antiguedad,devengado){###Me quede aqui
     
-    for(i in 1:nrow(base_de_datos)){
          aux<-0
 
-        edad<-edades[i]
+        edad<-edad
 
         simulacion<-simulaciones
 
@@ -197,22 +244,19 @@ costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descuento,inflacion,
             j<-j+1
 
         } 
+         print(edad)
          aux<-aux*2000000
-
-         ultimo_salario<-base_de_datos$DEVENGADO[i]*aumento_nominal^j
-         antiguedad<-antiguedad(base_de_datos$Antiguedad[i])
+         ultimo_salario<-devengado*aumento_nominal^j
+         antiguedad<-antiguedad(Antiguedad)
          pension<-antiguedad[1]*ultimo_salario
-
          aux<-aux+antiguedad[2]*ultimo_salario*simulacion*v^j
          +v^j*pension(anho,edad,tabla,t_descuento,j,pension,m,simulacion,seguro=1000000,inflacion)
-
-         suma<-suma+aux/simulaciones
-         print(cambio)
-        
+         return(aux/simulaciones)
     }
-    return(suma)
+    valores<-mapply(FUN=fn1,edad=edades,Antiguedad=antiguedades,devengado=devengados)
+    suma<-sum(valores)
+    
 }
-
 
 
 ##Se procede a programar una funcion la cual permite calcular el monto de la pension
@@ -258,7 +302,9 @@ pension<-function(anho,edad,tabla,t_descuento,j,salario,m,simulaciones,seguro=10
         j<-j+(meses==12)
 
         salario<-salario*(1+inflacion)^(meses==12)
+        edad<-edad+(meses==12)
     }
+    #print("Aqui")
     return(suma)
 }
 
@@ -267,14 +313,14 @@ pension<-function(anho,edad,tabla,t_descuento,j,salario,m,simulaciones,seguro=10
 #en la funcion programada 
 pensionados<-function(anho,tabla,base_de_datos,t_descuento,
 j,m,simulaciones,seguro=1000000,inflacion){
-    suma<-0
-    aux<-0  
-    for(i in 1:nrow(tabla)){
-        edad<-base_de_datos$FEC_NAC[i]
-        salario<-base_de_datos$MON_PENSION #Consulta hay que ajustar la pension o no
-        suma<-suma+pension(anho,edad,tabla,t_descuento,
-        j,salario,m,simulaciones,seguro=1000000,inflacion)/simulaciones
+    edades<-base_de_datos$Edad
+    salarios<-base_de_datos$MON_PENSION #Consulta hay que ajustar la pension o no
+    fn2<-function(edad,salario){
+        monto<-pension(anho,edad,tabla,t_descuento,j,salario=salario,m,simulaciones,seguro=1000000,inflacion)/simulaciones
+        return(monto)
     }
+    valores<-mapply(FUN=fn2,edad=edades,salario=salarios)
+    suma<-sum(valores)
     return(suma)
 }
 
@@ -286,6 +332,7 @@ j,m,simulaciones,seguro=1000000,inflacion){
 #calcula el costo de la pension a apartir de las dos funciones anteriores
 #debe recibir las dos bases de datos de afiliados y la base de pensionados
 #y todos los parametros que recibe la pension de costo de afiliados
+
 costo_plan<-function(anho,mujeres,hombres,t_descuento,inflacion,aumento,afiliados,pensionados,simulaciones,m){
     afil_mujeres<-afiliados%>%filter(SEXO=="F")
 
@@ -295,11 +342,9 @@ costo_plan<-function(anho,mujeres,hombres,t_descuento,inflacion,aumento,afiliado
 
     pen_hombres<-pensionados%>%filter(SEX=="M")
 
-    sumar_mujeres<-costo_afiliados_seguro(anho,mujeres,afil_mujeres,t_descuento,inflacion,aumento,62,simulaciones,m)
-                    +pensionados(anho,mujeres,pen_mujeres,t_descuento,1,m,simulaciones,seguro=1000000,inflacion)
-    sumar_hombres<-costo_afiliados_seguro(anho,hombres,afil_hombres,t_descuento,inflacion,aumento,65,simulaciones,m)
-                    +pensionados(anho,hombres,pen_hombres,t_descuento,1,m,simulaciones,seguro=1000000,inflacion)
-    return(suma_hombres+suma_mujeres)
+    sumar_mujeres%<-%costo_afiliados_seguro(anho,mujeres,afil_mujeres,t_descuento,inflacion,aumento,62,simulaciones,m)+pensionados(anho,mujeres,pen_mujeres,t_descuento,j=1,m,simulaciones,seguro=1000000,inflacion)
+sumar_hombres%<-%costo_afiliados_seguro(anho,hombres,afil_hombres,t_descuento,inflacion,aumento,62,simulaciones,m)+pensionados(anho,hombres,pen_hombres,t_descuento,j=1,m,simulaciones,seguro=1000000,inflacion)
+    return(sumar_mujeres+sumar_hombres)
 }
 
 ```
@@ -307,13 +352,14 @@ costo_plan<-function(anho,mujeres,hombres,t_descuento,inflacion,aumento,afiliado
 
 ```{r}
 ##Prueba de simulacion se ecirbe para evitar perdida de datos
+# prueba<-Afiliados_31_12_2020[1,]
+
+
 calculo_prueba<-costo_plan(2021,tabla_mortalidad_mujeres,tabla_mortalidad_hombres,0.06,0.03,0.02,Afiliados_31_12_2020,
                 Pensionados_31_12_2020,1000,12)
-write.ta1ble(calculo_prueba,file="prueba.txt",sep="")
 
+write.table(calculo_prueba,file="prueba.txt",sep="")
 ```
-
-
 
 
 
@@ -377,7 +423,8 @@ write.ta1ble(calculo_prueba,file="prueba.txt",sep="")
 
 
 
-## Estocastico
+
+
 
 
 
