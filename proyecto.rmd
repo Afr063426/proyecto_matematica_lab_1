@@ -18,6 +18,9 @@ library(kableExtra)
 
 Afiliados_31_12_2020 <- read_excel("Afiliados_31_12_2020.xlsx")
 Pensionados_31_12_2020 <- read_excel("Pensionados_31_12_2020.xlsx")
+tabla_mortalidad_mujeres<-read_excel("tabla_mortalidad_mujeres.xlsx")
+tabla_mortalidad_hombres<-read_excel("tabla_mortalidad_hombres.xlsx")
+
 
 
 TablaDinamica_lxsHombres <- as.data.frame(read_excel("TablaDinamica-lxs.xls", 
@@ -62,9 +65,9 @@ for (j in 1:(length(TablaDinamica_lxsMujeres)-1)){
 }
 names(ListaDeTablasMujeres)<-paste("E",seq(0,115), sep = "")
 
-#Se elimina las tablas de las mujeres
+#Se elimina las tablas lm
 
-rm(TablaDinamica_lxsHombres, TablaDinamica_lxsMujeres)
+rm(TablaDinamica_lxsMujeres,TablaDinamica_lxsHombres )
 ```
 
 
