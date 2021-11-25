@@ -14,6 +14,12 @@ Afiliados_31_12_2020 <- read_excel("Afiliados_31_12_2020.xlsx")
 Pensionados_31_12_2020 <- read_excel("Pensionados_31_12_2020.xlsx")
 tabla_mortalidad_mujeres<-read_excel("tabla_mortalidad_mujeres.xlsx")
 tabla_mortalidad_hombres<-read_excel("tabla_mortalidad_hombres.xlsx")
+
+TablaDinamica_lxsHombres <- read_excel("TablaDinamica-lxs.xls", 
+    sheet = "Hombres")
+TablaDinamica_lxsMUjeres <- read_excel("TablaDinamica-lxs.xls", 
+    sheet = "Mujeres")
+
 ```
 
 
@@ -214,9 +220,30 @@ pension<-function(anho,edad,tabla,t_decuento,j,salario,m,simulaciones,seguro=100
 
 
 
+```{r}
+# PensionMensualDetertinistico
 
 
 
+```
+
+
+```{r}
+#SumaDeRetiroDetertinistico
+
+
+
+
+```
+
+
+```{r}
+#SeguroVidaDetertinistico
+
+
+
+
+```
 
 
 
