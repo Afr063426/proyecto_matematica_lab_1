@@ -13,7 +13,7 @@ library(tidyverse)
 library(lubridate)
 library(readxl)
 library(kableExtra)
-
+library(LifeTables)
 
 
 Afiliados_31_12_2020 <- read_excel("Afiliados_31_12_2020.xlsx")
@@ -390,7 +390,7 @@ write.table(calculo_prueba,file="prueba.txt",sep="")
 PensionMensualDetertinistico <-
   function(Edad, hombre, antiguedad, ultimo_salario) {
 
-    j<-(Edad - 1)
+    j<-(Edad + 1)
     #anualidad
     # k=12, por se pagos mensuales
     # x=edad de la persona
@@ -419,7 +419,6 @@ PensionMensualDetertinistico <-
 
     return(porcentaje_de_pension(antiguedad) *  ultimo_salario * anualidad)
   }
-
 
 ```
 
