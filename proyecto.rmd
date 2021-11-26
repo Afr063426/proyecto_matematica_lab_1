@@ -28,11 +28,14 @@ TablaDinamica_lxsMUjeres <- read_excel("TablaDinamica-lxs.xls",
 ```{r}
 #Se calcula la edad cumplida de la personas
 dia_de_evaluacion<-as.Date('31/12/2020',format='%d/%m/%Y')
+
 edad<-floor(time_length(difftime(
     dia_de_evaluacion,
     as.Date(as.POSIXct(Afiliados_31_12_2020$FEC_NACIMIENTO),'UTC')),'years'))
+
 Afiliados_31_12_2020<-Afiliados_31_12_2020%>%mutate(FEC_INGRESO=paste(substr(FEC_INGRESO,1,4),
                     '/',substr(FEC_INGRESO,5,6),'/',substr(FEC_INGRESO,7,8),sep=''))
+
 antiguedad<-time_length(difftime(
             dia_de_evaluacion,
             as.Date(Afiliados_31_12_2020$FEC_INGRESO,
@@ -59,19 +62,23 @@ Pensionados_31_12_2020<-Pensionados_31_12_2020%>%mutate('Edad'=edad,'T_Pension'=
 ##Consultar a la profe si el monto de la pension que aparece de cuando es
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
 ## Analisis estadistico
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ```{r}
 #La idea del codigo es basarse en el paradigma de divide y venceras
