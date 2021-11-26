@@ -234,6 +234,8 @@ costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descuento,inflacion,
         vivos<-0
 
         j<-1
+          
+        Antiguedad<-Antiguedad+(jubilacion-edad)
 
         while(simulacion>0 & edad<jubilacion){
             vivos<-sum(rbinom(simulacion,1,1-qx(edad,anho,tabla,j)))
@@ -244,12 +246,13 @@ costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descuento,inflacion,
 
             aux<-aux+v^j*muertos
 
-            edad<-edad+j
+            edad<-edad+1
+
 
             j<-j+1
 
         } 
-         #print(edad)
+        #print(edad)
          aux<-aux*2000000
          ultimo_salario<-devengado*aumento_nominal^j
          antiguedad<-antiguedad(Antiguedad)
@@ -262,7 +265,6 @@ costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descuento,inflacion,
     suma<-sum(valores)
     
 }
-
 
 ##Se procede a programar una funcion la cual permite calcular el monto de la pension
 ##la idea esta funcion es que la funcion costos_afiliados_envie la cantidad de la poblacion
@@ -286,6 +288,7 @@ pension<-function(anho,edad,tabla,t_descuento,j,salario,m,simulaciones,seguro=10
     muertos<-0
 
     v<-1/((1+t_descuento)^(1/m))
+    v1<-1/((1+t_descuento))
 
     while(simulacion>0){
         vivos<-sum(rbinom(simulacion,1,1-meses/12*qx(edad,anho,tabla,j)))
@@ -294,20 +297,22 @@ pension<-function(anho,edad,tabla,t_descuento,j,salario,m,simulaciones,seguro=10
 
         simulacion<-vivos
 
-        suma<-suma+salario*v^(meses+k)*vivos
+        suma<-suma+salario*v^(meses+m*k)*vivos
+        
+        suma<-suma+muertos*v1^(k+1)*seguro*(meses==12 | simulacion==0)
 
-        k<-k+(meses==12)
-
-        meses<-(meses==12)+(meses<12)*(1+meses)
-
-        suma<-suma+muertos*v^(k+1)*seguro*(meses==12)
+        salario<-salario*(1+inflacion)^(meses==12)
 
         muertos<-muertos*(meses<12)+0
         
+        k<-k+(meses==12)
+        
         j<-j+(meses==12)
 
-        salario<-salario*(1+inflacion)^(meses==12)
+
         edad<-edad+(meses==12)
+
+        meses<-(meses==12)+(meses<12)*(1+meses)
     }
     #print("Aqui")
     return(suma)
@@ -318,14 +323,20 @@ pension<-function(anho,edad,tabla,t_descuento,j,salario,m,simulaciones,seguro=10
 #en la funcion programada 
 pensionados<-function(anho,tabla,base_de_datos,t_descuento,
 j,m,simulaciones,seguro=1000000,inflacion){
+    
     edades<-base_de_datos$Edad
+
     salarios<-base_de_datos$MON_PENSION #Consulta hay que ajustar la pension o no
+
     fn2<-function(edad,salario){
         monto<-pension(anho,edad,tabla,t_descuento,j,salario=salario,m,simulaciones,seguro=1000000,inflacion)/simulaciones
         return(monto)
     }
+
     valores<-mapply(FUN=fn2,edad=edades,salario=salarios)
+
     suma<-sum(valores)
+
     return(suma)
 }
 
@@ -349,7 +360,7 @@ costo_plan<-function(anho,mujeres,hombres,t_descuento,inflacion,aumento,afiliado
     pen_hombres<-pensionados%>%filter(SEX=="M")
 
     sumar_mujeres<-costo_afiliados_seguro(anho,mujeres,afil_mujeres,t_descuento,inflacion,aumento,62,simulaciones,m)+pensionados(anho,mujeres,pen_mujeres,t_descuento,j=1,m,simulaciones,seguro=1000000,inflacion)
-sumar_hombres<-costo_afiliados_seguro(anho,hombres,afil_hombres,t_descuento,inflacion,aumento,62,simulaciones,m)+pensionados(anho,hombres,pen_hombres,t_descuento,j=1,m,simulaciones,seguro=1000000,inflacion)
+sumar_hombres<-costo_afiliados_seguro(anho,hombres,afil_hombres,t_descuento,inflacion,aumento,65,simulaciones,m)+pensionados(anho,hombres,pen_hombres,t_descuento,j=1,m,simulaciones,seguro=1000000,inflacion)
     return(sumar_mujeres+sumar_hombres)
 }
 
@@ -362,7 +373,7 @@ sumar_hombres<-costo_afiliados_seguro(anho,hombres,afil_hombres,t_descuento,infl
 
 
 calculo_prueba<-costo_plan(2021,tabla_mortalidad_mujeres,tabla_mortalidad_hombres,0.06,0.03,0.02,Afiliados_31_12_2020,
-                Pensionados_31_12_2020,2000,12)
+                Pensionados_31_12_2020,10000,12)
 
 write.table(calculo_prueba,file="prueba.txt",sep="")
 ```
@@ -387,6 +398,7 @@ write.table(calculo_prueba,file="prueba.txt",sep="")
 
 ```{r}
 # PensionMensualDetertinistico
+##No es un seguro de vida completo y necesita diferimiento
 PensionMensualDetertinistico <-
   function(Edad, hombre, antiguedad, ultimo_salario) {
 
@@ -416,7 +428,6 @@ PensionMensualDetertinistico <-
           (antiguedad > 40)
       ))
     }
-
     return(porcentaje_de_pension(antiguedad) *  ultimo_salario * anualidad)
   }
 
@@ -451,6 +462,8 @@ SumaDeRetiroDetertinistico <- function(antiguedad, hombre, Edad, ultimo_salario)
 ```{r}
 #SeguroVidaDetertinistico
 
+#No es un seguro de vida completo
+
 SeguroVidaDetertinistico <- function(Edad, hombre) {
   if (Edad >= 65 & hombre) {
     return(1000000 * Axn(ListaDeTablasHombres[[(Edad - 1)]], x = Edad))
@@ -468,6 +481,12 @@ SeguroVidaDetertinistico <- function(Edad, hombre) {
 ```{r}
 #Costo deterministico
 #hombres
+
+##No se está ajustando la antiguedad del afiliado
+#Se puede vectorizar esto con mapply y se hace más rápido, 
+#podemos programar una funcion
+
+
 montohPensionMensualDetertinistico<-NA
 montohSeguroVidaDetertinistico<-NA
 montohSumaDeRetiroDetertinistico<-NA
