@@ -64,7 +64,8 @@ Pensionados_31_12_2020<-Pensionados_31_12_2020%>%mutate('Edad'=edad,'T_Pension'=
 
 ## Analisis estadistico
 ```{r}
-
+summary(Afiliados_31_12_2020)# %>% tibble()
+summary(Pensionados_31_12_2020)# %>% tibble()
 ```
 
 
