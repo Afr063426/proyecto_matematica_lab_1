@@ -1,13 +1,3 @@
----
-title: "Untitled"
-author: "varios"
-date: "23/11/2021"
-output: pdf_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
-options(scipen = 999)
 library(lifecontingencies)
 library(tidyverse)
 library(lubridate)
@@ -103,13 +93,9 @@ tiempo_pension<-floor(time_length(difftime(
 
 Pensionados_31_12_2020<-Pensionados_31_12_2020%>%mutate('Edad'=edad,'T_Pension'=tiempo_pension)
 
-```
 
-## Analisis estadistico
-```{r}
-summary(Afiliados_31_12_2020)# %>% tibble()
-summary(Pensionados_31_12_2020)# %>% tibble()
-```
+
+
 
 
 
@@ -167,7 +153,7 @@ summary(Pensionados_31_12_2020)# %>% tibble()
 
 
 ## Estocastico
-```{r}
+
 #La idea del codigo es basarse en el paradigma de divide y venceras
 #Se procede a programar el modelo estocasticos
 ##Primero se procede a programar una funcion la cual determina
@@ -340,11 +326,11 @@ j,m,simulaciones,seguro=1000000,inflacion){
     return(suma)
 }
 
-```
 
 
 
-```{r}
+
+
 #A partir de lo anterior se procede a programar una funcion la cual 
 #calcula el costo de la pension a apartir de las dos funciones anteriores
 #debe recibir las dos bases de datos de afiliados y la base de pensionados
@@ -364,205 +350,17 @@ sumar_hombres<-costo_afiliados_seguro(anho,hombres,afil_hombres,t_descuento,infl
     return(sumar_mujeres+sumar_hombres)
 }
 
-```
 
 
-```{r}
+
+
 ##Prueba de simulacion se ecirbe para evitar perdida de datos
 # prueba<-Afiliados_31_12_2020[1,]
 
 
 calculo_prueba<-costo_plan(2021,tabla_mortalidad_mujeres,tabla_mortalidad_hombres,0.06,0.03,0.02,Afiliados_31_12_2020,
-                Pensionados_31_12_2020,10000,12)
+                Pensionados_31_12_2020,50000000,12)
 
 write.table(calculo_prueba,file="prueba.txt",sep="")
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## Deterministico
-
-
-
-```{r}
-# PensionMensualDetertinistico
-##No es un seguro de vida completo y necesita diferimiento
-PensionMensualDetertinistico <-
-  function(Edad, hombre, antiguedad, ultimo_salario) {
-
-    j<-(Edad + 1)
-    #anualidad
-    # k=12, por se pagos mensuales
-    # x=edad de la persona
-    if (hombre) {
-      anualidad <-
-        axn(ListaDeTablasHombres[[j]], x = Edad,  k = 12)
-        #llevar a futuro el salario
-        ultimo_salario<-ultimo_salario*(1+0.05)^(65-Edad)
-        
-    } else{
-      anualidad <-
-        axn(ListaDeTablasMujeres[[j]], x = Edad,  k = 12)
-        #llevar a futuro el salario
-        ultimo_salario<-ultimo_salario*(1+0.05)^(62-Edad)
-    }
-    
-    #porcentaje de pensión
-    porcentaje_de_pension <- function(antiguedad) {
-      return(c(
-        (antiguedad > 10 & antiguedad <= 20) * 0.45 +
-          (antiguedad > 20 & antiguedad <= 30) * 0.65 +
-          (antiguedad > 30 & antiguedad <= 40) * 0.85 +
-          (antiguedad > 40)
-      ))
-    }
-    return(porcentaje_de_pension(antiguedad) *  ultimo_salario * anualidad)
-  }
-
-```
-
-
-```{r}
-#SumaDeRetiroDetertinistico
-
-
-SumaDeRetiroDetertinistico <- function(antiguedad, hombre, Edad, ultimo_salario) {
-  #Multiplo de lumpsum
-  Multiplo <- function(antiguedad) {
-    return(c(1 + (antiguedad > 10 & antiguedad <= 20) +
-               (antiguedad > 20 & antiguedad <= 30) * 2 +
-               (antiguedad > 30 & antiguedad <= 40) * 3 +
-               (antiguedad > 40) * 4))
-  }
-  
-   if (hombre) {
-        ultimo_salario<-ultimo_salario*(1+0.05)^(65-Edad)
-    } else{
-        ultimo_salario<-ultimo_salario*(1+0.05)^(62-Edad)
-    }
-  return(ultimo_salario * Multiplo(antiguedad))
-}
-
-```
-
-
-```{r}
-#SeguroVidaDetertinistico
-
-#No es un seguro de vida completo
-
-SeguroVidaDetertinistico <- function(Edad, hombre) {
-  if (Edad >= 65 & hombre) {
-    return(1000000 * Axn(ListaDeTablasHombres[[(Edad - 1)]], x = Edad))
-  } else if (Edad >= 62 & !hombre) {
-    return(1000000 * Axn(ListaDeTablasMujeres[[(Edad - 1)]], x = Edad))
-  } else if (Edad < 65 & hombre) {
-    return(2000000 * Axn(ListaDeTablasHombres[[(Edad - 1)]], x = Edad))
-  } else if (Edad < 62 & !hombre) {
-    return(2000000 * Axn(ListaDeTablasMujeres[[(Edad - 1)]], x = Edad))
-  }
-}
-```
-
-
-```{r}
-#Costo deterministico
-#hombres
-
-##No se está ajustando la antiguedad del afiliado
-#Se puede vectorizar esto con mapply y se hace más rápido, 
-#podemos programar una funcion
-
-
-montohPensionMensualDetertinistico<-NA
-montohSeguroVidaDetertinistico<-NA
-montohSumaDeRetiroDetertinistico<-NA
-Montoh<-NA
-montoMPensionMensualDetertinistico<-NA
-montoMSeguroVidaDetertinistico<-NA
-montoMSumaDeRetiroDetertinistico<-NA
-MontoM<-NA
-
-afil_hombres<-Afiliados_31_12_2020%>%filter(SEXO=="M")
-pen_hombres<-Pensionados_31_12_2020%>%filter(SEX=="M")
-
-for (i in 1:length( afil_hombres$Edad) ){
-montohPensionMensualDetertinistico[i]<-PensionMensualDetertinistico(afil_hombres$Edad[i],T, afil_hombres$Antiguedad[i], afil_hombres$DEVENGADO[i])
-montohSeguroVidaDetertinistico[i]<-SeguroVidaDetertinistico (afil_hombres$Edad[i], T) 
-montohSumaDeRetiroDetertinistico[i]<-SumaDeRetiroDetertinistico (afil_hombres$Antiguedad[i],T ,afil_hombres$Edad[i],afil_hombres$DEVENGADO[i])
-}
-
-for (i in 1:length(pen_hombres$Edad) ){
-  Montoh[i]<- SeguroVidaDetertinistico (pen_hombres$Edad[i], T)
-}
-
-
-
-afil_mujeres<-Afiliados_31_12_2020%>%filter(SEXO=="F")
-pen_mujeres<-Pensionados_31_12_2020%>%filter(SEX=="F") 
-
-for (i in 1:length( afil_mujeres$Edad) ){
-montoMPensionMensualDetertinistico<-PensionMensualDetertinistico(afil_mujeres$Edad[i],F, afil_mujeres$Antiguedad[i], afil_mujeres$DEVENGADO[i])
-montoMSeguroVidaDetertinistico[i]<-SeguroVidaDetertinistico (afil_mujeres$Edad[i], F) 
-montoMSumaDeRetiroDetertinistico<-SumaDeRetiroDetertinistico (afil_mujeres$Antiguedad[i],F ,afil_mujeres$Edad[i],afil_mujeres$DEVENGADO[i])
-}
-
-for (i in 1:length(pen_mujeres$Edad) ){
-  MontoM[i]<- SeguroVidaDetertinistico (pen_mujeres$Edad[i], T)
-}
-    
- sum(montohPensionMensualDetertinistico,
-montohSeguroVidaDetertinistico,
-montohSumaDeRetiroDetertinistico,
-Montoh,
-montoMPensionMensualDetertinistico,
-montoMSeguroVidaDetertinistico,
-montoMSumaDeRetiroDetertinistico,
-MontoM)   
-    
-    
-
-
-rm(afil_hombres,pen_hombres,afil_mujeres,pen_mujeres)
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
