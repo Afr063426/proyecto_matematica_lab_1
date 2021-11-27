@@ -471,18 +471,8 @@ SumaDeRetiroDetertinistico <- function(antiguedad, hombre, Edad, ultimo_salario,
   return(Monto)
 }
 
-a<-NA
 
-for (i in 1:length(afil_mujeres$Antiguedad)) {
-   a[i]<-SumaDeRetiroDetertinistico(afil_mujeres$Antiguedad[125],
-    F ,
-    afil_mujeres$Edad[125],
-    afil_mujeres$DEVENGADO[125],
-    0.06,
-    0.02
-  )
-  i
-}
+
 
 ```
 
@@ -518,6 +508,7 @@ montoMPensionMensualDetertinistico <- numeric()
 montoMSeguroVidaDetertinistico <- numeric()
 montoMSumaDeRetiroDetertinistico <- numeric()
 MontoM <- numeric()
+
 afil_hombres <- Afiliados_31_12_2020 %>% filter(SEXO == "M")
 pen_hombres <- Pensionados_31_12_2020 %>% filter(SEX == "M")
 #Calculo de PensionMensualDetertinistico para hombres
@@ -548,6 +539,9 @@ montohSumaDeRetiroDetertinistico <-
 #calculo de Seguro Vida Detertinistico pensionados para hombres
 Montoh <- mapply(SeguroVidaDetertinistico, pen_hombres$Edad, T)
 afil_mujeres <- Afiliados_31_12_2020 %>% filter(SEXO == "F")
+afil_mujeres <- afil_mujeres %>% filter(Edad <= 62)
+
+
 pen_mujeres <- Pensionados_31_12_2020 %>% filter(SEX == "F")
 #Calculo de PensionMensualDetertinistico para mujeres
 montoMPensionMensualDetertinistico <-
