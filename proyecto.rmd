@@ -409,15 +409,16 @@ PensionMensualDetertinistico <-
     if (hombre) {
     #anualidad imnediata
       anualidad <-
-        axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad,  i=interes,  k = 12, m=max(65-Edad,0), payment=immediate )
+        axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad,  i=interes,  k = 12, m=max(65-Edad,0), payment="immediate" )
         #llevar a futuro el salario
-        ultimo_salario<-ultimo_salario*(1+0.05)^(65-Edad)
-        
+        ultimo_salario<-ultimo_salario*(1+0.05)^(max(65-Edad,0))
+        antiguedad<-antiguedad+max(65-Edad,0)
     } else{
       anualidad <-
-        axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad,  i=interes,  k = 12, m=max(65-Edad,0), payment=immediate  )
+        axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad,  i=interes,  k = 12, m=max(62-Edad,0), payment="immediate"  )
         #llevar a futuro el salario
-        ultimo_salario<-ultimo_salario*(1+0.05)^(62-Edad)
+        ultimo_salario<-ultimo_salario*(1+0.05)^(max(62-Edad,0))
+        antiguedad<-antiguedad+max(62-Edad,0)
     }
     
     #porcentaje de pensión
@@ -429,6 +430,7 @@ PensionMensualDetertinistico <-
           (antiguedad > 40)
       ))
     }
+    
     return(porcentaje_de_pension(antiguedad) *  ultimo_salario * anualidad)
   }
 
@@ -460,8 +462,6 @@ SumaDeRetiroDetertinistico <- function(antiguedad, hombre, Edad, ultimo_salario)
 
 ```{r}
 #SeguroVidaDetertinistico
-
-#No es un seguro de vida completo
 
 SeguroVidaDetertinistico <- function(Edad, hombre) {
   if (Edad >= 65 & hombre) {
