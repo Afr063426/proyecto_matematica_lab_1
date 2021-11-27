@@ -403,21 +403,18 @@ PensionMensualDetertinistico <-
   function(Edad, hombre, antiguedad, ultimo_salario, interes ) {
     #Considerando una inflacion del 3%
     interes=(interes-0.03)/(1+0.03)
-    d=interes/(1+interes)
-    j=1/(1+0.03)
-    
     #anualidad
     # k=12, por se pagos mensuales
     # x=edad de la persona
     if (hombre) {
       anualidad <-
-        (1-j*Axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad,  i=interes,  k = 12, m=(65-Edad) ))/d
+        axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad,  i=interes,  k = 12, m=(65-Edad) )
         #llevar a futuro el salario
         ultimo_salario<-ultimo_salario*(1+0.05)^(65-Edad)
         
     } else{
       anualidad <-
-        (1-j*Axn(ListaDeTablasMujeres[[(Edad + 1)]], x = Edad,  i=interes,  k = 12, m=(62-Edad) ))/d
+        axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad,  i=interes,  k = 12, m=(62-Edad) )
         #llevar a futuro el salario
         ultimo_salario<-ultimo_salario*(1+0.05)^(62-Edad)
     }
