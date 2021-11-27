@@ -222,7 +222,7 @@ costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descuento,inflacion,
 
     v<-1/(1+t_descuento)
 
-    aumento_nominal<-(1+inflacion+aumento)
+    aumento_nominal<-(1+inflacion)*(1+aumento)
     fn1<-function(edad,Antiguedad,devengado){###Me quede aqui
     
          aux<-0
@@ -380,7 +380,15 @@ write.table(calculo_prueba,file="prueba.txt",sep="")
 
 
 
+```{r}
+##Se vectoriza el modelo deterministico
+#En algun momento se deberá meter la inflacion
+#y cambios en la tasa de descuento entonces tenerlo en cuenta
+modelo_deterministico<-function(){
+  
+}
 
+```
 
 
 
@@ -402,7 +410,7 @@ write.table(calculo_prueba,file="prueba.txt",sep="")
 PensionMensualDetertinistico <-
   function(Edad, hombre, antiguedad, ultimo_salario) {
 
-    j<-(Edad + 1)
+    j<-(Edad - 1)
     #anualidad
     # k=12, por se pagos mensuales
     # x=edad de la persona
@@ -430,6 +438,7 @@ PensionMensualDetertinistico <-
     }
     return(porcentaje_de_pension(antiguedad) *  ultimo_salario * anualidad)
   }
+
 
 ```
 
