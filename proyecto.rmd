@@ -103,9 +103,27 @@ Pensionados_31_12_2020<-Pensionados_31_12_2020%>%mutate('Edad'=edad,'T_Pension'=
 
 ## Analisis estadistico
 ```{r}
-summary(Afiliados_31_12_2020)# %>% tibble()
-summary(Pensionados_31_12_2020)# %>% tibble()
+# Afiliados_31_12_2020 <- read_excel("Afiliados_31_12_2020.xlsx") %>%
+#   mutate(FEC_NACIMIENTO = ymd(FEC_NACIMIENTO),
+#          edad = floor(lubridate::time_length(difftime(today(), FEC_NACIMIENTO), "years")))
+# 
+# Pensionados_31_12_2020 <- read_excel("Pensionados_31_12_2020.xlsx") %>%
+#   mutate(FEC_NAC = ymd(FEC_NAC),
+#          edad = floor(lubridate::time_length(difftime(today(), FEC_NAC), "years")))
+
+tblPrint <- function(tbl, cap = NULL){
+    tbl %>%  kbl(caption = cap) %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"),
+                latex_options = "HOLD_position",
+                full_width = F)
+}
+
+
+summary(Afiliados_310_12_2020) %>% tibble() %>%  zoo::na.fill(fill = "") %>% tblPrint("Afiliados")
+
+summary(Pensionados_31_12_2020) %>% tibble() %>%  zoo::na.fill(fill = "") %>% tblPrint("Pensionados")
 ```
+
 
 
 
