@@ -409,6 +409,7 @@ modelo_deterministico<-function(){
 ##No es un seguro de vida completo y necesita diferimiento
 PensionMensualDetertinistico <-
 <<<<<<< HEAD
+<<<<<<< HEAD
   function(Edad, hombre, antiguedad, ultimo_salario) {
 
     j<-(Edad - 1)
@@ -420,20 +421,27 @@ PensionMensualDetertinistico <-
     j=1/(1+0.03)
     
 >>>>>>> 7c1920529abad39b87608ead6b0cd8da647e9aee
+=======
+  function(Edad, hombre, antiguedad, ultimo_salario, interes) {
+    #Considerando una inflacion del 3%
+    interes<-(interes-0.03)/(1+0.03)
+>>>>>>> 04cd1163ace323c24d130a3ac91be9dda724d70d
     #anualidad
     # k=12, por se pagos mensuales
     # x=edad de la persona
     if (hombre) {
+    #anualidad imnediata
       anualidad <-
-        (1-j*Axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad,  i=interes,  k = 12, m=(65-Edad) ))/d
+        axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad,  i=interes,  k = 12, m=max(65-Edad,0), payment="immediate" )
         #llevar a futuro el salario
-        ultimo_salario<-ultimo_salario*(1+0.05)^(65-Edad)
-        
+        ultimo_salario<-ultimo_salario*(1+0.05)^(max(65-Edad,0))
+        antiguedad<-antiguedad+max(65-Edad,0)
     } else{
       anualidad <-
-        (1-j*Axn(ListaDeTablasMujeres[[(Edad + 1)]], x = Edad,  i=interes,  k = 12, m=(62-Edad) ))/d
+        axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad,  i=interes,  k = 12, m=max(62-Edad,0), payment="immediate"  )
         #llevar a futuro el salario
-        ultimo_salario<-ultimo_salario*(1+0.05)^(62-Edad)
+        ultimo_salario<-ultimo_salario*(1+0.05)^(max(62-Edad,0))
+        antiguedad<-antiguedad+max(62-Edad,0)
     }
     
     #porcentaje de pensión
@@ -445,6 +453,7 @@ PensionMensualDetertinistico <-
           (antiguedad > 40)
       ))
     }
+    
     return(porcentaje_de_pension(antiguedad) *  ultimo_salario * anualidad)
   }
 
@@ -478,8 +487,6 @@ SumaDeRetiroDetertinistico <- function(antiguedad, hombre, Edad, ultimo_salario)
 ```{r}
 #SeguroVidaDetertinistico
 
-#No es un seguro de vida completo
-
 SeguroVidaDetertinistico <- function(Edad, hombre) {
   if (Edad >= 65 & hombre) {
     return(1000000 * Axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad))
@@ -500,61 +507,89 @@ SeguroVidaDetertinistico <- function(Edad, hombre) {
 #hombres
 
 ##No se está ajustando la antiguedad del afiliado
-#Se puede vectorizar esto con mapply y se hace más rápido, 
+#Se puede vectorizar esto con mapply y se hace más rápido,
 #podemos programar una funcion
 
 
-montohPensionMensualDetertinistico<-numeric()
-montohSeguroVidaDetertinistico<-numeric()
-montohSumaDeRetiroDetertinistico<-numeric()
-Montoh<-numeric()
-montoMPensionMensualDetertinistico<-numeric()
-montoMSeguroVidaDetertinistico<-numeric()
-montoMSumaDeRetiroDetertinistico<-numeric()
-MontoM<-numeric()
+montohPensionMensualDetertinistico <- numeric()
+montohSeguroVidaDetertinistico <- numeric()
+montohSumaDeRetiroDetertinistico <- numeric()
+Montoh <- numeric()
+montoMPensionMensualDetertinistico <- numeric()
+montoMSeguroVidaDetertinistico <- numeric()
+montoMSumaDeRetiroDetertinistico <- numeric()
+MontoM <- numeric()
 
-afil_hombres<-Afiliados_31_12_2020%>%filter(SEXO=="M")
-pen_hombres<-Pensionados_31_12_2020%>%filter(SEX=="M")
+afil_hombres <- Afiliados_31_12_2020 %>% filter(SEXO == "M")
+pen_hombres <- Pensionados_31_12_2020 %>% filter(SEX == "M")
 
-for (i in 1:length( afil_hombres$Edad) ){
-montohPensionMensualDetertinistico[i]<-PensionMensualDetertinistico(afil_hombres$Edad[i],T, afil_hombres$Antiguedad[i], afil_hombres$DEVENGADO[i], 0.06)
-montohSeguroVidaDetertinistico[i]<-SeguroVidaDetertinistico (afil_hombres$Edad[i], T) 
-montohSumaDeRetiroDetertinistico[i]<-SumaDeRetiroDetertinistico (afil_hombres$Antiguedad[i],T ,afil_hombres$Edad[i],afil_hombres$DEVENGADO[i])
-}
-
-for (i in 1:length(pen_hombres$Edad) ){
-  Montoh[i]<- SeguroVidaDetertinistico (pen_hombres$Edad[i], T)
-}
-
-
-
-afil_mujeres<-Afiliados_31_12_2020%>%filter(SEXO=="F")
-pen_mujeres<-Pensionados_31_12_2020%>%filter(SEX=="F") 
-
-# montoMPensionMensualDetertinistico<-mapply(FUN=PensionMensualDetertinistico,Edad=afil_mujeres$Edad,hombre=F, antiguedad=afil_mujeres$Antiguedad,ultimo_salario=afil_mujeres$DEVENGADO, interes=0.06 ) 
-
-
-for (i in 1:length( afil_mujeres$Edad) ){
-montoMPensionMensualDetertinistico[i]<-PensionMensualDetertinistico(afil_mujeres$Edad[i],T, afil_mujeres$Antiguedad[i], afil_mujeres$DEVENGADO[i], 0.06)
-montoMSeguroVidaDetertinistico[i]<-SeguroVidaDetertinistico (afil_mujeres$Edad[i], F) 
-montoMSumaDeRetiroDetertinistico[i]<-SumaDeRetiroDetertinistico (afil_mujeres$Antiguedad[i],F ,afil_mujeres$Edad[i],afil_mujeres$DEVENGADO[i])
-}
-
-for (i in 1:length(pen_mujeres$Edad) ){
-  MontoM[i]<- SeguroVidaDetertinistico (pen_mujeres$Edad[i], T)
-}
+#Calculo de PensionMensualDetertinistico para hombres
+montohPensionMensualDetertinistico <-
+  mapply(
+    PensionMensualDetertinistico,
+    afil_hombres$Edad,
+    T,
+    afil_hombres$Antiguedad,
+    afil_hombres$DEVENGADO,
+    0.06
+  )
+#calculo de SeguroVida Detertinistico para hombres
+montohSeguroVidaDetertinistico <-
+  mapply(SeguroVidaDetertinistico, afil_hombres$Edad, T)
+#calculo de Retiro Deterministico para los afiliados para hombres
+montohSumaDeRetiroDetertinistico <-
+  mapply(
+    SumaDeRetiroDetertinistico,
+    afil_hombres$Antiguedad,
+    T ,
+    afil_hombres$Edad,
+    afil_hombres$DEVENGADO
+  )
+#calculo de Seguro Vida Detertinistico pensionados para hombres
+Montoh <- mapply(SeguroVidaDetertinistico, pen_hombres$Edad, T)
 
 
-    
-sum(montohPensionMensualDetertinistico,
-montohSeguroVidaDetertinistico,
-montohSumaDeRetiroDetertinistico,
-Montoh,
-montoMPensionMensualDetertinistico,
-montoMSeguroVidaDetertinistico,
-montoMSumaDeRetiroDetertinistico,
-MontoM)   
-    
+afil_mujeres <- Afiliados_31_12_2020 %>% filter(SEXO == "F")
+pen_mujeres <- Pensionados_31_12_2020 %>% filter(SEX == "F")
+
+#Calculo de PensionMensualDetertinistico para mujeres
+montoMPensionMensualDetertinistico <-
+  mapply(
+    PensionMensualDetertinistico,
+    afil_mujeres$Edad,
+    T,
+    afil_mujeres$Antiguedad,
+    afil_mujeres$DEVENGADO,
+    0.06
+  )
+#calculo de SeguroVida Detertinistico para mujeres
+montoMSeguroVidaDetertinistico <-
+  mapply(SeguroVidaDetertinistico, afil_mujeres$Edad, F)
+#calculo de Retiro Deterministico para los afiliados para mujeres
+montoMSumaDeRetiroDetertinistico <-
+  mapply(
+    SumaDeRetiroDetertinistico,
+    afil_mujeres$Antiguedad,
+    F ,
+    afil_mujeres$Edad,
+    afil_mujeres$DEVENGADO
+  )
+#calculo de Seguro Vida Detertinistico pensionados para mujeres
+MontoM <- mapply(SeguroVidaDetertinistico, pen_mujeres$Edad, T)
+
+
+
+sum(
+  montohPensionMensualDetertinistico,
+  montohSeguroVidaDetertinistico,
+  montohSumaDeRetiroDetertinistico,
+  Montoh,
+  montoMPensionMensualDetertinistico,
+  montoMSeguroVidaDetertinistico,
+  montoMSumaDeRetiroDetertinistico,
+  MontoM
+)
+
 sum(montohPensionMensualDetertinistico)
 sum(montohSeguroVidaDetertinistico)
 sum(montohSumaDeRetiroDetertinistico)
@@ -564,7 +599,7 @@ sum(montoMSeguroVidaDetertinistico)
 sum(montoMSumaDeRetiroDetertinistico)
 sum(MontoM)
 
-rm(afil_hombres,pen_hombres,afil_mujeres,pen_mujeres)
+rm(afil_hombres, pen_hombres, afil_mujeres, pen_mujeres)
 ```
 
 
