@@ -516,7 +516,6 @@ for (i in 1:length(pen_hombres$Edad) ){
 afil_mujeres<-Afiliados_31_12_2020%>%filter(SEXO=="F")
 pen_mujeres<-Pensionados_31_12_2020%>%filter(SEX=="F") 
 
-
 # montoMPensionMensualDetertinistico<-mapply(FUN=PensionMensualDetertinistico,Edad=afil_mujeres$Edad,hombre=F, antiguedad=afil_mujeres$Antiguedad,ultimo_salario=afil_mujeres$DEVENGADO, interes=0.06 ) 
 
 
@@ -541,8 +540,14 @@ montoMSeguroVidaDetertinistico,
 montoMSumaDeRetiroDetertinistico,
 MontoM)   
     
-
-
+sum(montohPensionMensualDetertinistico)
+sum(montohSeguroVidaDetertinistico)
+sum(montohSumaDeRetiroDetertinistico)
+sum(Montoh)
+sum(montoMPensionMensualDetertinistico)
+sum(montoMSeguroVidaDetertinistico)
+sum(montoMSumaDeRetiroDetertinistico)
+sum(MontoM)
 
 rm(afil_hombres,pen_hombres,afil_mujeres,pen_mujeres)
 ```
