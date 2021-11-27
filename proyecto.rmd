@@ -67,7 +67,7 @@ names(ListaDeTablasMujeres)<-paste("E",seq(0,115), sep = "")
 
 #Se elimina las tablas lm
 
-rm(TablaDinamica_lxsMujeres,TablaDinamica_lxsHombres )
+#rm(TablaDinamica_lxsMujeres,TablaDinamica_lxsHombres )
 
 #Se calcula la edad cumplida de la personas
 dia_de_evaluacion<-as.Date('31/12/2020',format='%d/%m/%Y')
@@ -182,8 +182,11 @@ summary(Pensionados_31_12_2020)# %>% tibble()
 ###tabla es la tabla de mortalidad, debe ser dinámica
 ###j tiempo posterior al año de partida
 qx<-function(edad,anho,tabla,tiempo){
-    entrada<-which(as.numeric(colnames(tabla)[-1])==anho)
-    prob_muerte<-tabla[edad+tiempo,entrada+tiempo]
+  if(edad+2<nrow(tabla)){
+    prob_muerte<-1-tabla[edad+2,edad-tiempo+1]/tabla[edad+1,edad-tiempo+1]
+    }else{
+      prob_muerte<-1
+    }
     return(as.numeric(prob_muerte))
 }
 
@@ -238,7 +241,7 @@ costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descuento,inflacion,
         Antiguedad<-Antiguedad+(jubilacion-edad)
 
         while(simulacion>0 & edad<jubilacion){
-            vivos<-sum(rbinom(simulacion,1,1-qx(edad,anho,tabla,j)))
+            vivos<-sum(rbinom(n=simulacion,size=1,prob=1-qx(edad,anho,tabla,j)))
 
             muertos<-simulacion-vivos
 
@@ -284,14 +287,14 @@ pension<-function(anho,edad,tabla,t_descuento,j,salario,m,simulaciones,seguro=10
     k<-0
 
     salario<-salario
-
     muertos<-0
-
     v<-1/((1+t_descuento)^(1/m))
     v1<-1/((1+t_descuento))
 
-    while(simulacion>0){
-        vivos<-sum(rbinom(simulacion,1,1-meses/12*qx(edad,anho,tabla,j)))
+    while(simulacion>0) {
+      probabilidad<-qx(edad,anho,tabla,j)
+      probabilidad<-probabilidad*(1/12*(probabilidad!=1)+1/12*(probabilidad==1&meses<12)+(probabilidad==1 & meses==12))
+        vivos<-sum(rbinom(n=simulacion,size=1,prob=1-probabilidad))
 
         muertos<-muertos+simulacion-vivos
 
@@ -372,8 +375,8 @@ sumar_hombres<-costo_afiliados_seguro(anho,hombres,afil_hombres,t_descuento,infl
 # prueba<-Afiliados_31_12_2020[1,]
 
 
-calculo_prueba<-costo_plan(2021,tabla_mortalidad_mujeres,tabla_mortalidad_hombres,0.06,0.03,0.02,Afiliados_31_12_2020,
-                Pensionados_31_12_2020,10000,12)
+calculo_prueba<-costo_plan(2021,TablaDinamica_lxsMujeres,TablaDinamica_lxsHombres,0.06,0.03,0.02,Afiliados_31_12_2020,
+                Pensionados_31_12_2020,100,12)
 
 write.table(calculo_prueba,file="prueba.txt",sep="")
 ```
@@ -399,7 +402,6 @@ modelo_deterministico<-function(){
 
 
 
-
 ## Deterministico
 
 
@@ -408,24 +410,9 @@ modelo_deterministico<-function(){
 # PensionMensualDetertinistico
 ##No es un seguro de vida completo y necesita diferimiento
 PensionMensualDetertinistico <-
-<<<<<<< HEAD
-<<<<<<< HEAD
-  function(Edad, hombre, antiguedad, ultimo_salario) {
-
-    j<-(Edad - 1)
-=======
-  function(Edad, hombre, antiguedad, ultimo_salario, interes ) {
-    #Considerando una inflacion del 3%
-    interes=(interes-0.03)/(1+0.03)
-    d=interes/(1+interes)
-    j=1/(1+0.03)
-    
->>>>>>> 7c1920529abad39b87608ead6b0cd8da647e9aee
-=======
   function(Edad, hombre, antiguedad, ultimo_salario, interes) {
     #Considerando una inflacion del 3%
     interes<-(interes-0.03)/(1+0.03)
->>>>>>> 04cd1163ace323c24d130a3ac91be9dda724d70d
     #anualidad
     # k=12, por se pagos mensuales
     # x=edad de la persona
@@ -456,8 +443,6 @@ PensionMensualDetertinistico <-
     
     return(porcentaje_de_pension(antiguedad) *  ultimo_salario * anualidad)
   }
-
-
 ```
 
 
@@ -480,13 +465,11 @@ SumaDeRetiroDetertinistico <- function(antiguedad, hombre, Edad, ultimo_salario)
     }
   return(ultimo_salario * Multiplo(antiguedad))
 }
-
 ```
 
 
 ```{r}
 #SeguroVidaDetertinistico
-
 SeguroVidaDetertinistico <- function(Edad, hombre) {
   if (Edad >= 65 & hombre) {
     return(1000000 * Axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad))
@@ -505,12 +488,9 @@ SeguroVidaDetertinistico <- function(Edad, hombre) {
 ```{r}
 #Costo deterministico
 #hombres
-
 ##No se está ajustando la antiguedad del afiliado
 #Se puede vectorizar esto con mapply y se hace más rápido,
 #podemos programar una funcion
-
-
 montohPensionMensualDetertinistico <- numeric()
 montohSeguroVidaDetertinistico <- numeric()
 montohSumaDeRetiroDetertinistico <- numeric()
@@ -519,10 +499,8 @@ montoMPensionMensualDetertinistico <- numeric()
 montoMSeguroVidaDetertinistico <- numeric()
 montoMSumaDeRetiroDetertinistico <- numeric()
 MontoM <- numeric()
-
 afil_hombres <- Afiliados_31_12_2020 %>% filter(SEXO == "M")
 pen_hombres <- Pensionados_31_12_2020 %>% filter(SEX == "M")
-
 #Calculo de PensionMensualDetertinistico para hombres
 montohPensionMensualDetertinistico <-
   mapply(
@@ -547,11 +525,8 @@ montohSumaDeRetiroDetertinistico <-
   )
 #calculo de Seguro Vida Detertinistico pensionados para hombres
 Montoh <- mapply(SeguroVidaDetertinistico, pen_hombres$Edad, T)
-
-
 afil_mujeres <- Afiliados_31_12_2020 %>% filter(SEXO == "F")
 pen_mujeres <- Pensionados_31_12_2020 %>% filter(SEX == "F")
-
 #Calculo de PensionMensualDetertinistico para mujeres
 montoMPensionMensualDetertinistico <-
   mapply(
@@ -576,9 +551,6 @@ montoMSumaDeRetiroDetertinistico <-
   )
 #calculo de Seguro Vida Detertinistico pensionados para mujeres
 MontoM <- mapply(SeguroVidaDetertinistico, pen_mujeres$Edad, T)
-
-
-
 sum(
   montohPensionMensualDetertinistico,
   montohSeguroVidaDetertinistico,
@@ -589,7 +561,6 @@ sum(
   montoMSumaDeRetiroDetertinistico,
   MontoM
 )
-
 sum(montohPensionMensualDetertinistico)
 sum(montohSeguroVidaDetertinistico)
 sum(montohSumaDeRetiroDetertinistico)
@@ -598,12 +569,8 @@ sum(montoMPensionMensualDetertinistico)
 sum(montoMSeguroVidaDetertinistico)
 sum(montoMSumaDeRetiroDetertinistico)
 sum(MontoM)
-
 rm(afil_hombres, pen_hombres, afil_mujeres, pen_mujeres)
 ```
-
-
-
 
 
 
