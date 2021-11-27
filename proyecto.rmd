@@ -400,21 +400,22 @@ write.table(calculo_prueba,file="prueba.txt",sep="")
 # PensionMensualDetertinistico
 ##No es un seguro de vida completo y necesita diferimiento
 PensionMensualDetertinistico <-
-  function(Edad, hombre, antiguedad, ultimo_salario, interes ) {
+  function(Edad, hombre, antiguedad, ultimo_salario, interes) {
     #Considerando una inflacion del 3%
-    interes=(interes-0.03)/(1+0.03)
+    interes<-(interes-0.03)/(1+0.03)
     #anualidad
     # k=12, por se pagos mensuales
     # x=edad de la persona
     if (hombre) {
+    #anualidad imnediata
       anualidad <-
-        axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad,  i=interes,  k = 12, m=(65-Edad) )
+        axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad,  i=interes,  k = 12, m=max(65-Edad,0), payment=immediate )
         #llevar a futuro el salario
         ultimo_salario<-ultimo_salario*(1+0.05)^(65-Edad)
         
     } else{
       anualidad <-
-        axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad,  i=interes,  k = 12, m=(62-Edad) )
+        axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad,  i=interes,  k = 12, m=max(65-Edad,0), payment=immediate  )
         #llevar a futuro el salario
         ultimo_salario<-ultimo_salario*(1+0.05)^(62-Edad)
     }
