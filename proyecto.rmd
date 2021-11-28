@@ -101,6 +101,9 @@ Pensionados_31_12_2020<-Pensionados_31_12_2020%>%mutate('Edad'=edad,'T_Pension'=
 
 ```
 
+
+
+
 ## Analisis estadistico
 ```{r}
 # Afiliados_31_12_2020 <- read_excel("Afiliados_31_12_2020.xlsx") %>%
