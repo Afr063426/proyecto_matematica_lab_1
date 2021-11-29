@@ -105,6 +105,9 @@ Pensionados_31_12_2020<-Pensionados_31_12_2020%>%mutate('Edad'=edad,'T_Pension'=
 
 ```
 
+
+
+
 ## Analisis estadistico
 ```{r}
 summary(Afiliados_31_12_2020)# %>% tibble()
@@ -554,9 +557,14 @@ PensionMensualDetertinistico <-
       #   anualidadAcumulada <-anualidadAcumulada * (1+0.03)^(floor(k)==k)
       # 
       # }
+
+=======
+
       # anualidad <-12*axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad,  i=tasa_descuento,  k = 12, m=max(65-Edad,0), payment="immediate" )
       #
 ```
+
+
 ```{r}
 #llevar a futuro el salario
       ultimo_salario<-ultimo_salario*tasa_cre_salario^(max(65-Edad,0))
@@ -590,6 +598,8 @@ PensionMensualDetertinistico <-
     
     return(porcentaje_de_pension(antiguedad) *  ultimo_salario * anualidad)
   }
+
+
 ```
 
 
@@ -654,6 +664,7 @@ montoMPensionMensualDetertinistico <- numeric()
 montoMSeguroVidaDetertinistico <- numeric()
 montoMSumaDeRetiroDetertinistico <- numeric()
 MontoM <- numeric()
+
 afil_hombres <- Afiliados_31_12_2020 %>% filter(SEXO == "M")
 pen_hombres <- Pensionados_31_12_2020 %>% filter(SEX == "M")
 #Calculo de PensionMensualDetertinistico para hombres
@@ -683,8 +694,13 @@ montohSumaDeRetiroDetertinistico <-
   )
 #calculo de Seguro Vida Detertinistico pensionados para hombres
 Montoh <- mapply(SeguroVidaDetertinistico, pen_hombres$Edad, T)
+
+
+
 afil_mujeres <- Afiliados_31_12_2020 %>% filter(SEXO == "F")
 afil_mujeres <- afil_mujeres %>% filter(Edad <= 62)
+
+
 pen_mujeres <- Pensionados_31_12_2020 %>% filter(SEX == "F")
 #Calculo de PensionMensualDetertinistico para mujeres
 montoMPensionMensualDetertinistico <-
@@ -732,6 +748,8 @@ sum(montoMSeguroVidaDetertinistico)
 sum(montoMSumaDeRetiroDetertinistico)
 sum(MontoM)# este nos da
 rm(afil_hombres, pen_hombres, afil_mujeres, pen_mujeres)
+
+
 montoMPensionMensualDetertinistico <-
   mapply(
     PensionMensualDetertinistico,
@@ -743,8 +761,16 @@ montoMPensionMensualDetertinistico <-
     0.02
   )
 sum(montoMPensionMensualDetertinistico)
+
+
 (178869760-172262876
-)/17226287
+)/172262876
+
+
+
+
+```
+
 
 
 
