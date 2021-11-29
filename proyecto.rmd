@@ -237,97 +237,52 @@ antiguedad<-function(n){
 #A pesar de que esto es el seguro de costos 
 #funerarios, se programa una funcion a parte para la pension
 seguro<-function(sex,base_de_datos,t_descuento,inflacion,aumento_real,jubilacion,simulaciones){
-    edades<-base_de_datos$Edad
-    
+    edades<-base_de_datos$Edad 
     v<-1/(1+t_descuento)
     fn1<-function(edad){
-    
-         aux<-0
-
-        
-
+        aux<-0
         simulacion<-simulaciones
-
         vivos<-0
-
         j<-1
-          
-        
-        
-        
         Edad<-edad
-
         while(simulacion>0 & edad<jubilacion){
           if(sex){
             probabilidad<-pxt(ListaDeTablasHombres[[(Edad+1)]], x=edad,t=1)
             vivos<-sum(rbinom(n=simulacion,size=1,prob=probabilidad))
-
             muertos<-simulacion-vivos
-
-
             aux<-aux+v^j*muertos
-
             simulacion<-vivos
-
             edad<-edad+1
-
-
             j<-j+1
-
         } else{
             probabilidad<-pxt(ListaDeTablasMujeres[[(Edad+1)]], x=edad,t=1)
             vivos<-sum(rbinom(n=simulacion,size=1,prob=probabilidad))
-
             muertos<-simulacion-vivos
-
-
             aux<-aux+v^j*muertos
-
             simulacion<-vivos
-
             edad<-edad+1
-
-
             j<-j+1
-
         }
     }
          suma<-aux*2000000
-         aux<-0
-    
+         aux<-0 
     while(simulacion>0){
           if(sex){
             probabilidad<-pxt(ListaDeTablasHombres[[(Edad+1)]], x=edad,t=1)
             vivos<-sum(rbinom(n=simulacion,size=1,prob=probabilidad))
-
             muertos<-simulacion-vivos
-
-
             aux<-aux+v^j*muertos
-
             simulacion<-vivos
-
             edad<-edad+1
-
-
             j<-j+1
-
         } else{
             probabilidad<-pxt(ListaDeTablasMujeres[[(Edad+1)]], x=edad,t=1)
             vivos<-sum(rbinom(n=simulacion,size=1,prob=probabilidad))
-
             muertos<-simulacion-vivos
-
-
             aux<-aux+v^j*muertos
-
             simulacion<-vivos
-
             edad<-edad+1
-
-
             j<-j+1
-
         }
     }
     aux<-aux*1000000
@@ -348,49 +303,68 @@ seguro<-function(sex,base_de_datos,t_descuento,inflacion,aumento_real,jubilacion
 ##El momento es el momento j
 ##El anhno tambien debe ser pasado, para poder ubicarse en la tabla de mortalidad
 ##Tambien se le deben pasar la inflacion y tambien tasa de descuento
-
-
-pension<-function(base_de_datos,sex,t_descuento,m,simulaciones,inflacion,aumento_real,pensionado,jubilacion){
-    edades<-base_de_datos$Edad
-    v<-1/(1+t_descuento)
-    aumento<-(1+inflacion)*(1+aumento_real)
-    if(pensionado){
-    montos<-base_de_datos$MON_PENSION*(aumento*v)^(max(jubilacion-edades,0))
-    Antiguedades<-0
-    }else{
-      montos<-base_de_datos$DEVENGADO
-      Antiguedades<-base_de_datos$Antiguedad
-      montos<-montos*(aumento*v)^(max(jubilacion-edades,0))
-    }
-    fn2<-function(edad,monto,anti){
-      Edad<-edad
-      j<-1/m
-      suma<-0
-      simulacion<-simulaciones
-      monto<-monto *(pensionado+!pensionado*antiguedad(anti+max(jubilacion-edad))[1])
-      vivos<-1
-      while(simulacion>0){
-        if(sex){
-      probabilidad<-pxt(ListaDeTablasHombres[[(Edad+1)]], x=edad,t=1/m)
+pension_afil<-function(base_de_datos,sex,t_descuento,m,simulaciones,inflacion,aumento_real,jubilacion){
+  v<-1/(1+t_descuento)
+  aumento<-(1+0.03)*(1+aumento_real)
+  edades<-base_de_datos$Edad
+  antiguedades<-base_de_datos$Antiguedad
+  montos<-base_de_datos$DEVENGADO
+  fn2<-function(edad,monto,anti){
+    Edad<-edad
+    j<-1/m
+    suma<-0
+    simulacion<-simulaciones
+    monto<-monto*(v*aumento)^(max(jubilacion-Edad,0))
+    monto<-monto*(antiguedad(anti+max(jubilacion-Edad,0))[1])
+    while(simulacion>0){
+      if(sex){
+        probabilidad<-pxt(ListaDeTablasHombres[[(Edad+1)]], x=edad,t=1/m)
       }else{
         probabilidad<-pxt(ListaDeTablasMujeres[[(Edad+1)]], x=edad,t=1/m)
       }
       vivos<-sum(rbinom(n=simulacion,size=1,prob=probabilidad))
-      suma<-suma+v^(j)*vivos*monto
       simulacion<-vivos
       edad<-edad+1/m
+      suma<-suma+v^j*monto*vivos
       monto<-monto*(1+inflacion)^(floor(j)==j)
       j<-j+1/m
-      }
-      return(suma/simulaciones)
     }
-    valores<-mapply(FUN=fn2,edad=edades,monto=montos,anti=Antiguedades)
+    return(suma/simulaciones)
+  }
+  valores<-mapply(FUN=fn2,edad=edades,monto=montos,anti=antiguedades)
     return(sum(valores))
 }
-
-
-
-
+pension_pen<-function(base_de_datos,sex,t_descuento,m,simulaciones,inflacion,aumento_real,jubilacion){
+  v<-1/(1+t_descuento)
+  aumento<-(1+0.03)*(1+aumento_real)
+  edades<-base_de_datos$Edad
+  antiguedades<-0
+  montos<-base_de_datos$MON_PENSION
+  fn2<-function(edad,monto,anti){
+    Edad<-edad
+    j<-1/m
+    suma<-0
+    simulacion<-simulaciones
+    monto<-monto*(v*aumento)^(max(jubilacion-Edad,0))
+    monto<-monto
+    while(simulacion>0){
+      if(sex){
+        probabilidad<-pxt(ListaDeTablasHombres[[(Edad+1)]], x=edad,t=1/m)
+      }else{
+        probabilidad<-pxt(ListaDeTablasMujeres[[(Edad+1)]], x=edad,t=1/m)
+      }
+      vivos<-sum(rbinom(n=simulacion,size=1,prob=probabilidad))
+      simulacion<-vivos
+      edad<-edad+1/m
+      suma<-suma+v^j*monto*vivos
+      monto<-monto*(1+inflacion)^(floor(j)==j)
+      j<-j+1/m
+    }
+    return(suma/simulaciones)
+  }
+  valores<-mapply(FUN=fn2,edad=edades,monto=montos,anti=antiguedades)
+    return(sum(valores))
+}
 #Funcion para calculo de lump sum
 lump_sum_st<-function(base_de_datos,t_descuento,simulaciones,inflacion,aumento_real,jubilacion){
   edades<-base_de_datos$Edad
@@ -432,27 +406,21 @@ lump_sum_st<-function(base_de_datos,t_descuento,simulaciones,inflacion,aumento_r
 
 costo_plan<-function(t_descuento,inflacion,aumento_real,afiliados,pensionados,simulaciones,m){
     afil_mujeres<-afiliados%>%filter(SEXO=="F")
-
     afil_hombres<-afiliados%>%filter(SEXO=="M")
-
     pen_mujeres<-pensionados%>%filter(SEX=="F")
-
     pen_hombres<-pensionados%>%filter(SEX=="M")
-    hombres_afil_lum<-0#lump_sum_st(afil_hombres,t_descuento,simulaciones,inflacion,aumento_real,65)
-    hombres_afil_vida<-0#seguro(TRUE,afil_hombres,t_descuento,inflacion,aumento_real,65,simulaciones)
-    hombres_afil_pen<-pension(afil_hombres,TRUE,t_descuento,m,simulaciones,inflacion,aumento_real,FALSE,65)
-    mujeres_afil_lum<-0#lump_sum_st(afil_mujeres,t_descuento,simulaciones,inflacion,aumento_real,62)
-    mujeres_afil_vida<-0#seguro(FALSE,afil_hombres,t_descuento,inflacion,aumento_real,65,simulaciones)
-    mujeres_afil_pen<-0#pension(afil_hombres,FALSE,t_descuento,m,simulaciones,inflacion,aumento_real,FALSE,62)
-    
-
-
+    hombres_afil_lum<-lump_sum_st(afil_hombres,t_descuento,simulaciones,inflacion,aumento_real,65)
+    hombres_afil_vida<-seguro(TRUE,afil_hombres,t_descuento,inflacion,aumento_real,65,simulaciones)
+    hombres_afil_pen<-pension_afil(afil_hombres,TRUE,t_descuento,m,simulaciones,inflacion,aumento_real,65)
+    mujeres_afil_lum<-lump_sum_st(afil_mujeres,t_descuento,simulaciones,inflacion,aumento_real,62)
+    mujeres_afil_vida<-seguro(FALSE,afil_hombres,t_descuento,inflacion,aumento_real,65,simulaciones)
+    mujeres_afil_pen<-pension_afil(afil_hombres,FALSE,t_descuento,m,simulaciones,inflacion,aumento_real,62)
     ##Pensionados
-    hombres_pen_vida<-0#seguro(TRUE,pen_hombres,t_descuento,inflacion,aumento_real,65,simulaciones)
-    hombres_pen_pen<-0#pension(pen_hombres,TRUE,t_descuento,m,simulaciones,inflacion,aumento_real,TRUE,65)
-    mujeres_pen_vida<-0#seguro(FALSE,pen_mujeres,t_descuento,inflacion,aumento_real,65,simulaciones)
-    mujeres_pen_pen<-0#pension(pen_mujeres,FALSE,t_descuento,m,simulaciones,inflacion,aumento_real,TRUE,62)
-    #+seguro(sex=TRUE,base_de_datos=afil_hombres,t_descuento,inflacion,aumento,jubilacion=65,simulaciones)+
+    hombres_pen_vida<-seguro(TRUE,pen_hombres,t_descuento,inflacion,aumento_real,65,simulaciones)
+    hombres_pen_pen<-pension_pen(pen_hombres,TRUE,t_descuento,m,simulaciones,inflacion,aumento_real,65)
+    mujeres_pen_vida<-seguro(FALSE,pen_mujeres,t_descuento,inflacion,aumento_real,65,simulaciones)
+    mujeres_pen_pen<-pension_pen(pen_mujeres,FALSE,t_descuento,m,simulaciones,inflacion,aumento_real,62)
+    
     return(hombres_afil_lum+hombres_afil_pen+hombres_afil_vida+hombres_pen_pen+hombres_pen_vida
     +mujeres_afil_lum+mujeres_afil_pen+mujeres_afil_vida+mujeres_pen_pen+mujeres_pen_vida
     )
@@ -466,7 +434,7 @@ costo_plan<-function(t_descuento,inflacion,aumento_real,afiliados,pensionados,si
 # prueba<-Afiliados_31_12_2020[1,]
 
 
-calculo_prueba<-costo_plan(t_descuento=0.06,inflacion=0.03,aumento_real=0.02,Afiliados_31_12_2020,Pensionados_31_12_2020,simulaciones=100,m=12)
+calculo_prueba<-costo_plan(t_descuento=0.06,inflacion=0.03,aumento_real=0.02,Afiliados_31_12_2020,Pensionados_31_12_2020,simulaciones=10,m=12)
 write.table(calculo_prueba,file="prueba.txt",sep="")
 ```
 
@@ -489,22 +457,21 @@ write.table(calculo_prueba,file="prueba.txt",sep="")
 ```{r}
 # PensionMensualDetertinistico
 ##No es un seguro de vida completo y necesita diferimiento
-PensionMensualDetertinistico <-
-  function(Edad, hombre, antiguedad, ultimo_salario, tasa_descuento, tasa_cre_salario) {
+#PensionMensualDetertinistico <-function(Edad, hombre, antiguedad, ultimo_salario, tasa_descuento, tasa_cre_salario) {
     #Considerando una inflacion del 3%
-    tasa_cre_salario<-(1+tasa_cre_salario)*(1+0.03)
-    pensionado<-antiguedad==-1
-    #anualidad
+ #   tasa_cre_salario<-(1+tasa_cre_salario)*(1+0.03)
+ #   pensionado<-antiguedad==-1
+ #   #anualidad
     # k=12, por se pagos mensuales
-    # x=edad de la persona
-    if (hombre) {
-     #anualidad imnediata
-     vectorMensual<-(seq(1/12, (115-Edad), 1/12))
-     vectorAnualmensual<-sort(rep(c(0:(115-Edad-1)),12))
-     anualidad <-pxt(ListaDeTablasHombres[[(Edad+1)]], 
-     x=Edad,t=vectorMensual )*(1/(1+tasa_descuento))^(vectorMensual)
-     anualidad<-sum((1+0.03)^(vectorAnualmensual)*anualidad)*
-     (1/(1+tasa_descuento))^(max(65-Edad,0))
+ #   # x=edad de la persona
+#  if (hombre) {
+#     #anualidad imnediata
+#     vectorMensual<-(seq(1/12, (115-Edad), 1/12))
+#     vectorAnualmensual<-sort(rep(c(0:(115-Edad-1)),12))
+#     anualidad <-pxt(ListaDeTablasHombres[[(Edad+1)]], 
+#     x=Edad,t=vectorMensual )*(1/(1+tasa_descuento))^(vectorMensual)
+#     anualidad<-sum((1+0.03)^(vectorAnualmensual)*anualidad)*
+#     (1/(1+tasa_descuento))^(max(65-Edad,0))
      
       # anualidadAcumulada <-1
       # anualidad<-0
@@ -515,39 +482,100 @@ PensionMensualDetertinistico <-
       # }
 
 #llevar a futuro el salario
-      ultimo_salario<-ultimo_salario*tasa_cre_salario^(max(65-Edad,0))
-      antiguedad<-antiguedad+max(65-Edad,0)
-    } else{
-      vectorMensual<-(seq(1/12, (115-Edad), 1/12))
-      vectorAnualmensual<-sort(rep(c(0:(115-Edad-1)),12))
-      
-      anualidad <-pxt(ListaDeTablasMujeres[[(Edad+1)]],
-      Edad,t=vectorMensual )*(1/(1+tasa_descuento))^(vectorMensual)
-      anualidad <-sum((1+0.03)^(vectorAnualmensual)*anualidad)
-        #llevar a futuro el salario
-        ultimo_salario<-ultimo_salario*tasa_cre_salario^(max(62-Edad,0))*
-        (1/(1+tasa_descuento))^(min(Edad-65,0))
-        antiguedad<-antiguedad+max(62-Edad,0)
-    }
+#      ultimo_salario<-ultimo_salario*tasa_cre_salario^(max(65-Edad,0))
+#      antiguedad<-antiguedad+max(65-Edad,0)
+#    } else{
+#      vectorMensual<-(seq(1/12, (115-Edad), 1/12))
+#      vectorAnualmensual<-sort(rep(c(0:(115-Edad-1)),12))
+#      
+#      anualidad <-pxt(ListaDeTablasMujeres[[(Edad+1)]],
+#      Edad,t=vectorMensual )*(1/(1+tasa_descuento))^(vectorMensual)
+#      anualidad <-sum((1+0.03)^(vectorAnualmensual)*anualidad)
+#        #llevar a futuro el salario
+#        ultimo_salario<-ultimo_salario*tasa_cre_salario^(max(62-Edad,0))*
+#        (1/(1+tasa_descuento))^(min(Edad-65,0))
+#        antiguedad<-antiguedad+max(62-Edad,0)
+#    }
     
     #porcentaje de pensión
-    porcentaje_de_pension <- function(antiguedad) {
-      por<-c((antiguedad >= 10 & antiguedad < 20) * 0.45 +
-          (antiguedad >= 20 & antiguedad < 30) * 0.65 +
-          (antiguedad >= 30 & antiguedad < 40) * 0.85 +
-          (antiguedad >= 40)
-      )
-      
-      if(pensionado){
-        por<-1
-      }
-      return(por)
+#    porcentaje_de_pension <- function(antiguedad) {
+#      por<-c((antiguedad >= 10 & antiguedad < 20) * 0.45 +
+#          (antiguedad >= 20 & antiguedad < 30) * 0.65 +
+#          (antiguedad >= 30 & antiguedad < 40) * 0.85 +
+#          (antiguedad >= 40)
+#      )
+#      
+#      if(pensionado){
+#        por<-1
+#      }
+#      return(por)
+#    }
+    
+    
+    
+#    return(porcentaje_de_pension(antiguedad) *  ultimo_salario * anualidad)
+#  }
+
+
+#Pension mensual deterministico segunda prueba
+PensionMensualDetertinistico_afil<-function(Edad, hombre, antiguedad, ultimo_salario, tasa_descuento, tasa_cre_salario){
+  
+  v<-1/(1+tasa_descuento)
+  aumento<-(1+0.03)*(1+tasa_cre_salario)
+  j<-1/12#seq(1/12,116-55,1/12)
+  if(hombre){
+  ultimo_salario<-ultimo_salario*(v*aumento)^(max(65-Edad,0))
+  ultimo_salario<-ultimo_salario*(antiguedad(antiguedad+max(65-Edad,0))[1])
+  probabilidad<-pxt(ListaDeTablasHombres[[(Edad+1)]], x=Edad,t=j)
+  suma<-0
+  while(probabilidad>0){
+    suma<-suma+v^j*ultimo_salario*probabilidad
+    ultimo_salario<-ultimo_salario*(1+0.03)^(floor(j)==j)
+    j<-j+1/12
+    probabilidad<-pxt(ListaDeTablasHombres[[(Edad+1)]], x=Edad,t=j)
     }
-    
-    
-    
-    return(porcentaje_de_pension(antiguedad) *  ultimo_salario * anualidad)
+  }else{
+    ultimo_salario<-ultimo_salario*(v*aumento)^(max(62-Edad,0))
+    ultimo_salario<-ultimo_salario*(antiguedad(antiguedad+max(62-Edad,0))[1])
+    probabilidad<-pxt(ListaDeTablasMujeres[[(Edad+1)]], x=Edad,t=j)
+  suma<-0
+  while(probabilidad>0){
+    suma<-suma+v^j*ultimo_salario*probabilidad
+    ultimo_salario<-ultimo_salario*(1+0.03)^(floor(j)==j)
+    j<-j+1/12
+    probabilidad<-pxt(ListaDeTablasMujeres[[(Edad+1)]], x=Edad,t=j)
   }
+  return(suma)
+  }
+}
+PensionMensualDetertinistico_pen<-function(Edad, hombre, ultimo_salario, tasa_descuento, tasa_cre_salario){
+  
+  v<-1/(1+tasa_descuento)
+  aumento<-(1+0.03)*(1+tasa_cre_salario)
+  j<-1/12#seq(1/12,116-55,1/12)
+  if(hombre){
+  ultimo_salario<-ultimo_salario*(v*aumento)^(max(65-Edad,0))
+  probabilidad<-pxt(ListaDeTablasHombres[[(Edad+1)]], x=Edad,t=j)
+  suma<-0
+  while(probabilidad>0){
+    suma<-suma+v^j*ultimo_salario*probabilidad
+    ultimo_salario<-ultimo_salario*(1+0.03)^(floor(j)==j)
+    j<-j+1/12
+    probabilidad<-pxt(ListaDeTablasHombres[[(Edad+1)]], x=Edad,t=j)
+    }
+  }else{
+    ultimo_salario<-ultimo_salario*(v*aumento)^(max(62-Edad,0))
+    probabilidad<-pxt(ListaDeTablasMujeres[[(Edad+1)]], x=Edad,t=j)
+    suma<-0
+  while(probabilidad>0){
+    suma<-suma+v^j*ultimo_salario*probabilidad
+    ultimo_salario<-ultimo_salario*(1+0.03)^(floor(j)==j)
+    j<-j+1/12
+    probabilidad<-pxt(ListaDeTablasMujeres[[(Edad+1)]], x=Edad,t=j)
+  }
+  return(suma)
+  }
+}
 
 
 ```
@@ -603,24 +631,14 @@ SeguroVidaDetertinistico <- function(Edad, hombre) {
 ```{r}
 #Costo deterministico
 #hombres
-##No se está ajustando la antiguedad del afiliado
-#Se puede vectorizar esto con mapply y se hace más rápido,
-#podemos programar una funcion
-#montohPensionMensualDetertinistico <- numeric()
-#montohSeguroVidaDetertinistico <- numeric()
-#montohSumaDeRetiroDetertinistico <- numeric()
-#Montoh <- numeric()
-#montoMPensionMensualDetertinistico <- numeric()
-#montoMSeguroVidaDetertinistico <- numeric()
-#montoMSumaDeRetiroDetertinistico <- numeric()
-#MontoM <- numeric()
+
 
 afil_hombres <- Afiliados_31_12_2020 %>% filter(SEXO == "M")
 pen_hombres <- Pensionados_31_12_2020 %>% filter(SEX == "M")
 #Calculo de PensionMensualDetertinistico para hombres
 montohPensionMensualDetertinistico <-
   mapply(
-    PensionMensualDetertinistico,
+    PensionMensualDetertinistico_afil,
     afil_hombres$Edad,
     TRUE,
     afil_hombres$Antiguedad,
@@ -645,9 +663,18 @@ montohSumaDeRetiroDetertinistico <-
   )
 #calculo de Seguro Vida Detertinistico pensionados para hombres
 Montoh <- mapply(SeguroVidaDetertinistico, pen_hombres$Edad, T)
+pension_pensionados_h<-
+mapply(
+    PensionMensualDetertinistico_pen,
+    pen_hombres$Edad,
+    TRUE,
+    pen_hombres$MON_PENSION,
+    0.06,
+    0.02
+  )
 
 
-
+#Calculo para mujeres
 afil_mujeres <- Afiliados_31_12_2020 %>% filter(SEXO == "F")
 afil_mujeres <- afil_mujeres %>% filter(Edad <= 62)
 
@@ -666,7 +693,7 @@ montoMPensionMensualDetertinistico <-
   )
 #calculo de SeguroVida Detertinistico para mujeres
 montoMSeguroVidaDetertinistico <-
-  mapply(SeguroVidaDetertinistico, afil_mujeres$Edad, F)
+  mapply(SeguroVidaDetertinistico, afil_mujeres$Edad, F)  
 #calculo de Retiro Deterministico para los afiliados para mujeres
 montoMSumaDeRetiroDetertinistico <-
   mapply(
@@ -680,42 +707,59 @@ montoMSumaDeRetiroDetertinistico <-
   )
 #calculo de Seguro Vida Detertinistico pensionados para mujeres
 MontoM <- mapply(SeguroVidaDetertinistico, pen_mujeres$Edad, F)
+pension_pensionados_m<-
+mapply(
+    PensionMensualDetertinistico_pen,
+    pen_mujeres$Edad,
+    FALSE,
+    pen_mujeres$MON_PENSION,
+    0.06,
+    0.02
+  )
+
 sum(
   montohPensionMensualDetertinistico,
   montohSeguroVidaDetertinistico,
   montohSumaDeRetiroDetertinistico,
   Montoh,
+  pension_pensionados_h,
   montoMPensionMensualDetertinistico,
   montoMSeguroVidaDetertinistico,
   montoMSumaDeRetiroDetertinistico,
-  MontoM
+  MontoM,
+  pension_pensionados_m
 )
 sum(montohPensionMensualDetertinistico)
 sum(montohSeguroVidaDetertinistico)
 sum(montohSumaDeRetiroDetertinistico)
 sum(Montoh)
+sum(pension_pensionados_h)
 sum(montoMPensionMensualDetertinistico)
 sum(montoMSeguroVidaDetertinistico)
 sum(montoMSumaDeRetiroDetertinistico)
-sum(MontoM)# este nos da
-rm(afil_hombres, pen_hombres, afil_mujeres, pen_mujeres)
+sum(MontoM)
+sum(pension_pensionados_m)
+
+# este nos da
+#rm(afil_hombres, pen_hombres, afil_mujeres, pen_mujeres)
 
 
-montoMPensionMensualDetertinistico <-
-  mapply(
-    PensionMensualDetertinistico,
-    pen_hombres$Edad[1],
-    T,
-    -1,
-    pen_hombres$MON_PENSION[1],
-    0.06,
-    0.02
-  )
-sum(montoMPensionMensualDetertinistico)
+#montoMPensionMensualDetertinistico <-
+#  mapply(
+#    PensionMensualDetertinistico,
+#    pen_hombres$Edad,
+#    TRUE,
+#    -1,
+#    pen_hombres$MON_PENSION,
+#    0.06,
+#    0.02,
+#    TRUE
+#  )
+#sum(montoMPensionMensualDetertinistico)
 
 
-(178869760-172262876
-)/172262876
+#(178869760-172262876
+#)/172262876
 
 
 
