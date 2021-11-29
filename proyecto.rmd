@@ -14,6 +14,9 @@ library(lubridate)
 library(readxl)
 library(kableExtra)
 
+library(stringr)
+library(xts)
+library(tinytex)
 
 
 Afiliados_31_12_2020 <- read_excel("Afiliados_31_12_2020.xlsx")
@@ -110,11 +113,52 @@ Pensionados_31_12_2020<-Pensionados_31_12_2020%>%mutate('Edad'=edad,'T_Pension'=
 
 ## Analisis estadistico
 ```{r}
-summary(Afiliados_31_12_2020)# %>% tibble()
-summary(Pensionados_31_12_2020)# %>% tibble()
+Afiliados_31_12_2020 <- read_excel("Afiliados_31_12_2020.xlsx") %>%
+  mutate(FEC_NACIMIENTO = ymd(FEC_NACIMIENTO),
+         edad = floor(lubridate::time_length(difftime(today(), FEC_NACIMIENTO), "years")))
+
+Pensionados_31_12_2020 <- read_excel("Pensionados_31_12_2020.xlsx") %>%
+  mutate(FEC_NAC = ymd(FEC_NAC),
+         edad = floor(lubridate::time_length(difftime(today(), FEC_NAC), "years")))
+tblPrint <- function(tbl, cap = NULL){
+    tbl %>%  kbl(caption = cap) %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"),
+                latex_options = "HOLD_position",
+                full_width = F)
+}
+
+
+summary(Afiliados_31_12_2020) %>% tibble() %>%  zoo::na.fill(fill = "") %>% tblPrint("Afiliados")
+
+summary(Pensionados_31_12_2020) %>% tibble() %>%  zoo::na.fill(fill = "") %>% tblPrint("Pensionados")
 ```
 
+```{r}
+afi <- Afiliados_31_12_2020 %>% mutate(
+  SEXO = as.factor(SEXO),
+  edad = as.factor(edad)
+)
 
+pobAfi <- afi %>% group_by(edad, SEXO)%>%
+  summarize(Cantidad =  n())
+
+n <- sum(pobAfi$Cantidad[pobAfi$SEXO=="M"])
+m <- sum(pobAfi$Cantidad[pobAfi$SEXO=="F"])
+
+
+pobAfi$Cantidad[pobAfi$SEXO == "M"] <- -pobAfi$Cantidad
+
+pobAfi$Cantidad[pobAfi$SEXO=="M"] <-
+                pobAfi$Cantidad[pobAfi$SEXO=="M"]/n
+pobAfi$Cantidad[pobAfi$SEXO=="F"] <-
+                pobAfi$Cantidad[pobAfi$SEXO=="F"]/m
+colnames(pobAfi)[3] <- "Porcentaje"
+
+pobAfi %>% ggplot(aes(x=edad, y=Porcentaje, fill=SEXO)) +
+  geom_bar(stat="identity") +
+  coord_flip()+
+  theme_minimal()+labs(title="Afiliados 31 de diciembre 2020")
+```
 
 
 
