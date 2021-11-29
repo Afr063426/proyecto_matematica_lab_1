@@ -15,16 +15,20 @@ library(readxl)
 library(kableExtra)
 
 
+
 Afiliados_31_12_2020 <- read_excel("Afiliados_31_12_2020.xlsx")
 Pensionados_31_12_2020 <- read_excel("Pensionados_31_12_2020.xlsx")
 tabla_mortalidad_mujeres<-read_excel("tabla_mortalidad_mujeres.xlsx")
 tabla_mortalidad_hombres<-read_excel("tabla_mortalidad_hombres.xlsx")
 
 
+
 TablaDinamica_lxsHombres <- as.data.frame(read_excel("TablaDinamica-lxs.xls", 
     sheet = "Hombres"))
 TablaDinamica_lxsMujeres <- as.data.frame(read_excel("TablaDinamica-lxs.xls", 
     sheet = "Mujeres"))
+
+
 
 #Se genera lista con las tablas de los hombres
 
@@ -103,27 +107,9 @@ Pensionados_31_12_2020<-Pensionados_31_12_2020%>%mutate('Edad'=edad,'T_Pension'=
 
 ## Analisis estadistico
 ```{r}
-# Afiliados_31_12_2020 <- read_excel("Afiliados_31_12_2020.xlsx") %>%
-#   mutate(FEC_NACIMIENTO = ymd(FEC_NACIMIENTO),
-#          edad = floor(lubridate::time_length(difftime(today(), FEC_NACIMIENTO), "years")))
-# 
-# Pensionados_31_12_2020 <- read_excel("Pensionados_31_12_2020.xlsx") %>%
-#   mutate(FEC_NAC = ymd(FEC_NAC),
-#          edad = floor(lubridate::time_length(difftime(today(), FEC_NAC), "years")))
-
-tblPrint <- function(tbl, cap = NULL){
-    tbl %>%  kbl(caption = cap) %>%
-  kable_styling(bootstrap_options = c("striped", "condensed"),
-                latex_options = "HOLD_position",
-                full_width = F)
-}
-
-
-summary(Afiliados_310_12_2020) %>% tibble() %>%  zoo::na.fill(fill = "") %>% tblPrint("Afiliados")
-
-summary(Pensionados_31_12_2020) %>% tibble() %>%  zoo::na.fill(fill = "") %>% tblPrint("Pensionados")
+summary(Afiliados_31_12_2020)# %>% tibble()
+summary(Pensionados_31_12_2020)# %>% tibble()
 ```
-
 
 
 
@@ -195,14 +181,14 @@ summary(Pensionados_31_12_2020) %>% tibble() %>%  zoo::na.fill(fill = "") %>% tb
 ###ano este es el año en el que se quiere hacer la evaluacion
 ###tabla es la tabla de mortalidad, debe ser dinámica
 ###j tiempo posterior al año de partida
-qx<-function(edad,anho,tabla,tiempo){
-  if(edad+2<nrow(tabla)){
-    prob_muerte<-1-tabla[edad+2,edad-tiempo+1]/tabla[edad+1,edad-tiempo+1]
-    }else{
-      prob_muerte<-1
-    }
-    return(as.numeric(prob_muerte))
-}
+#qx<-function(edad,anho,tabla,tiempo,columna){
+#  if(edad+2<nrow(tabla)){
+#    prob_muerte<-1-tabla[edad+2,columna+2]/tabla[edad+1,columna+2]
+#    }else{
+#      prob_muerte<-1
+#    }
+#    return(as.numeric(prob_muerte))
+#}
 
 antiguedad<-function(n){
     return(c(
@@ -232,19 +218,18 @@ antiguedad<-function(n){
 #La jubilacion va por persona
 #A pesar de que esto es el seguro de costos 
 #funerarios, se programa una funcion a parte para la pension
-costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descuento,inflacion,aumento,jubilacion,simulaciones,m){
+seguro<-function(anho,tabla,base_de_datos,t_descuento,inflacion,aumento,jubilacion,simulaciones,m){
     edades<-base_de_datos$Edad
-    antiguedades<-base_de_datos$Antiguedad
-    devengados<-base_de_datos$DEVENGADO
+    #antiguedades<-base_de_datos$Antiguedad
+    #devengados<-base_de_datos$DEVENGADO
 
     v<-1/(1+t_descuento)
-
-    aumento_nominal<-(1+inflacion)*(1+aumento)
-    fn1<-function(edad,Antiguedad,devengado){###Me quede aqui
+    #aumento_nominal<-(1+inflacion)*(1+aumento)
+    fn1<-function(edad){###Me quede aqui
     
          aux<-0
 
-        edad<-edad
+        #edad<-edad
 
         simulacion<-simulaciones
 
@@ -252,35 +237,103 @@ costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descuento,inflacion,
 
         j<-1
           
-        Antiguedad<-Antiguedad+(jubilacion-edad)
+        #Antiguedad<-Antiguedad+(jubilacion-edad)
+        
+        
+        Edad<-edad
 
         while(simulacion>0 & edad<jubilacion){
-            vivos<-sum(rbinom(n=simulacion,size=1,prob=1-qx(edad,anho,tabla,j)))
+          if(tabla){
+            probabilidad<-pxt(ListaDeTablasHombres[[(Edad+1)]], x=edad,t=1)
+            vivos<-sum(rbinom(n=simulacion,size=1,prob=probabilidad))
 
             muertos<-simulacion-vivos
 
-            simulacion<-vivos
 
             aux<-aux+v^j*muertos
+
+            simulacion<-vivos
 
             edad<-edad+1
 
 
             j<-j+1
 
-        } 
-        #print(edad)
-         aux<-aux*2000000
-         ultimo_salario<-devengado*aumento_nominal^j
-         antiguedad<-antiguedad(Antiguedad)
-         pension<-antiguedad[1]*ultimo_salario
-         aux<-aux+antiguedad[2]*ultimo_salario*simulacion*v^j
-         +v^j*pension(anho,edad,tabla,t_descuento,j,pension,m,simulacion,seguro=1000000,inflacion)
-         return(aux/simulaciones)
+        } else{
+            probabilidad<-pxt(ListaDeTablasMujeres[[(Edad+1)]], x=edad,t=1)
+            vivos<-sum(rbinom(n=simulacion,size=1,prob=probabilidad))
+
+            muertos<-simulacion-vivos
+
+
+            aux<-aux+v^j*muertos
+
+            simulacion<-vivos
+
+            edad<-edad+1
+
+
+            j<-j+1
+
+        }
     }
-    valores<-mapply(FUN=fn1,edad=edades,Antiguedad=antiguedades,devengado=devengados)
+         suma<-aux*2000000
+         aux<-0
+    ###borar de desde aqui
+    while(simulacion>0){
+          if(tabla){
+            probabilidad<-pxt(ListaDeTablasHombres[[(Edad+1)]], x=edad,t=1)
+            vivos<-sum(rbinom(n=simulacion,size=1,prob=probabilidad))
+
+            muertos<-simulacion-vivos
+
+
+            aux<-aux+v^j*muertos
+
+            simulacion<-vivos
+
+            edad<-edad+1
+
+
+            j<-j+1
+
+        } else{
+            probabilidad<-pxt(ListaDeTablasMujeres[[(Edad+1)]], x=edad,t=1)
+            vivos<-sum(rbinom(n=simulacion,size=1,prob=probabilidad))
+
+            muertos<-simulacion-vivos
+
+
+            aux<-aux+v^j*muertos
+
+            simulacion<-vivos
+
+            edad<-edad+1
+
+
+            j<-j+1
+
+        }
+    }
+    aux<-aux*1000000
+    suma<-suma+aux
+
+
+
+    ######
+        #print(edad)
+         #ultimo_salario<-devengado*aumento_nominal^(jubilacion-edad)
+         #antiguedad<-antiguedad(Antiguedad)
+         #pension<-antiguedad[1]*ultimo_salario
+         #aux<-aux+antiguedad[2]*ultimo_salario*simulacion
+         #+v^(jubilacion-edad)*pension(anho,edad,tabla,t_descuento,Edad,pension,m,simulacion,seguro=1000000,inflacion,columna)
+         
+         #return(aux/simulaciones)
+         return(suma/simulaciones)
+    }
+    valores<-mapply(FUN=fn1,edad=edades)#,Antiguedad=antiguedades,devengado=devengados)
     suma<-sum(valores)
-    
+    return(suma)
 }
 
 ##Se procede a programar una funcion la cual permite calcular el monto de la pension
@@ -291,70 +344,127 @@ costo_afiliados_seguro<-function(anho,tabla,base_de_datos,t_descuento,inflacion,
 ##El momento es el momento j
 ##El anhno tambien debe ser pasado, para poder ubicarse en la tabla de mortalidad
 ##Tambien se le deben pasar la inflacion y tambien tasa de descuento
-pension<-function(anho,edad,tabla,t_descuento,j,salario,m,simulaciones,seguro=1000000,inflacion){
+pension<-function(anho,edad,tabla,t_descuento,Edad,salario,m,simulaciones,seguro=1000000,inflacion,columna){
     simulacion<-simulaciones
 
-    meses<-1
+    #meses<-1
 
     suma<-0
 
-    k<-0
+    #k<-0
 
     salario<-salario
     muertos<-0
     v<-1/((1+t_descuento)^(1/m))
-    v1<-1/((1+t_descuento))
-
+    
     while(simulacion>0) {
-      probabilidad<-qx(edad,anho,tabla,j)
-      probabilidad<-probabilidad*(1/12*(probabilidad!=1)+1/12*(probabilidad==1&meses<12)+(probabilidad==1 & meses==12))
-        vivos<-sum(rbinom(n=simulacion,size=1,prob=1-probabilidad))
+      if(tabla){
+      probabilidad<-pxt(ListaDeTablasHombres[[(Edad+1)]], x=edad,t=j)
+      #probabilidad<-probabilidad*(1/12*(probabilidad!=1)+1/12*(probabilidad==1&meses<12)+(probabilidad==1 & meses==12))
+        vivos<-sum(rbinom(n=simulacion,size=1,prob=probabilidad))
 
-        muertos<-muertos+simulacion-vivos
-
-        simulacion<-vivos
+        #muertos<-muertos+simulacion-vivos
 
         suma<-suma+salario*v^(meses+m*k)*vivos
         
-        suma<-suma+muertos*v1^(k+1)*seguro*(meses==12 | simulacion==0)
-
-        salario<-salario*(1+inflacion)^(meses==12)
-
-        muertos<-muertos*(meses<12)+0
+        simulacion<-vivos
         
-        k<-k+(meses==12)
+        #suma<-suma+muertos*v1^(k+1)*seguro*(meses==12 | simulacion==0)
+
         
-        j<-j+(meses==12)
+        #salario<-salario*(1+inflacion)^(meses==12)
 
+        #muertos<-muertos*(meses<12)+0
+        
+        #k<-k+(meses==12)
 
-        edad<-edad+(meses==12)
+        edad<-edad+1/12
 
-        meses<-(meses==12)+(meses<12)*(1+meses)
+        #meses<-(meses==12)+(meses<12)*(1+meses)
+        
+        
+    }else{
+      probabilidad<-pxt(ListaDeTablasHombres[[(Edad+1)]], x=edad,t=1/12)
+      #probabilidad<-probabilidad*(1/12*(probabilidad!=1)+1/12*(probabilidad==1&meses<12)+(probabilidad==1 & meses==12))
+        vivos<-sum(rbinom(n=simulacion,size=1,prob=probabilidad))
+
+        #muertos<-muertos+simulacion-vivos
+
+        suma<-suma+salario*v^(meses+m*k)*vivos
+        
+        simulacion<-vivos
+        
+        #suma<-suma+muertos*v1^(k+1)*seguro*(meses==12 | simulacion==0)
+
+        
+        #salario<-salario*(1+inflacion)^(meses==12)
+
+        #muertos<-muertos*(meses<12)+0
+        
+        #k<-k+(meses==12)
+
+        edad<-edad+1/12
+
+        #meses<-(meses==12)+(meses<12)*(1+meses)
+        
+        
     }
+  }
     #print("Aqui")
     return(suma)
 }
 
 
+pension<-function(tabla,base_de_datos,t_descuento,m,simulaciones,inflacion,pensionado){
+  if(pensionado){
+    edades<-base_de_datos$Edad
+    montos<-base_de_datos$MON_PENSION
+    fn2<-function(edad,monto){
+      Edad<-edad
+      j<-1/m
+      v<-1/(1+t_descuento)
+      suma<-0
+      simulacion<-simulaciones
+      while(simulacion>0){
+      probabilidad<-pxt(ListaDeTablasHombres[[(Edad+1)]], x=edad,t=1/m)
+      vivos<-sum(rbinom(n=simulacion,size=1,prob=probabilidad))
+      suma<-suma+v^(j)*vivos*monto
+      simulacion<-vivos
+      edad<-edad+1/m
+      monto<-monto*(1+inflacion)^(floor(j)==j)
+      j<-j+1/m
+      }
+      return(suma/simulaciones)
+    }
+    valores<-mapply(FUN=fn2,edad=edades,monto=montos)
+    return(sum(valores))
+  }
+}
+
+
 ##Se procede a programar una funcion para la base de pensionados que usa lo programado
 #en la funcion programada 
-pensionados<-function(anho,tabla,base_de_datos,t_descuento,
-j,m,simulaciones,seguro=1000000,inflacion){
+pensionados<-function(anho,tabla,base_de_datos,t_descuento,m,simulaciones,seguro=1000000,inflacion){
     
-    edades<-base_de_datos$Edad
+    #edades<-base_de_datos$Edad
 
-    salarios<-base_de_datos$MON_PENSION #Consulta hay que ajustar la pension o no
+    #salarios<-base_de_datos$MON_PENSION #Consulta hay que ajustar la pension o no
 
-    fn2<-function(edad,salario){
-        monto<-pension(anho,edad,tabla,t_descuento,j,salario=salario,m,simulaciones,seguro=1000000,inflacion)/simulaciones
-        return(monto)
-    }
+    #fn2<-function(edad,salario){
+        #columna<-edad
 
-    valores<-mapply(FUN=fn2,edad=edades,salario=salarios)
+        #monto<-pension(anho,edad,tabla,t_descuento,edad,salario=salario,m,simulaciones,seguro=1000000,inflacion,columna)
+    #E}
 
-    suma<-sum(valores)
 
-    return(suma)
+    #valores<-mapply(FUN=fn2,edad=edades,salario=salarios)
+
+    #suma<-sum(valores)
+
+    #return(suma)
+    #Este queda hay que revisar valores monto<-seguro(anho,tabla,base_de_datos,t_descuento,inflacion,0.02,65,simulaciones,12)
+    monto<-pension(tabla,base_de_datos,t_descuento,m,simulaciones,inflacion,TRUE)
+    return(monto)
 }
 
 ```
@@ -375,10 +485,11 @@ costo_plan<-function(anho,mujeres,hombres,t_descuento,inflacion,aumento,afiliado
     pen_mujeres<-pensionados%>%filter(SEX=="F")
 
     pen_hombres<-pensionados%>%filter(SEX=="M")
+    pen_hombres<-pen_hombres[1,]
 
-    sumar_mujeres<-costo_afiliados_seguro(anho,mujeres,afil_mujeres,t_descuento,inflacion,aumento,62,simulaciones,m)+pensionados(anho,mujeres,pen_mujeres,t_descuento,j=1,m,simulaciones,seguro=1000000,inflacion)
-sumar_hombres<-costo_afiliados_seguro(anho,hombres,afil_hombres,t_descuento,inflacion,aumento,65,simulaciones,m)+pensionados(anho,hombres,pen_hombres,t_descuento,j=1,m,simulaciones,seguro=1000000,inflacion)
-    return(sumar_mujeres+sumar_hombres)
+    sumar_mujeres<-0#pensionados(anho,FALSE,pen_mujeres,t_descuento,m,simulaciones,seguro=1000000,inflacion)#costo_afiliados_seguro(anho,FALSE,afil_mujeres,t_descuento,inflacion,aumento,62,simulaciones,m)+
+    sumar_hombres<-pensionados(anho,TRUE,pen_hombres,t_descuento,m,simulaciones,seguro=1000000,inflacion)#seguro(anho,T,afil_hombres,t_descuento,inflacion,aumento,62,simulaciones,m)#
+    return(sumar_mujeres+sumar_hombres)#costo_afiliados_seguro(anho,TRUE,afil_hombres,t_descuento,inflacion,aumento,65,simulaciones,m)+
 }
 
 ```
@@ -390,7 +501,7 @@ sumar_hombres<-costo_afiliados_seguro(anho,hombres,afil_hombres,t_descuento,infl
 
 
 calculo_prueba<-costo_plan(2021,TablaDinamica_lxsMujeres,TablaDinamica_lxsHombres,0.06,0.03,0.02,Afiliados_31_12_2020,
-                Pensionados_31_12_2020,100,12)
+                Pensionados_31_12_2020,1000000,12)
 
 write.table(calculo_prueba,file="prueba.txt",sep="")
 ```
@@ -477,20 +588,18 @@ SumaDeRetiroDetertinistico <- function(antiguedad, hombre, Edad, ultimo_salario,
         ultimo_salario<-ultimo_salario*tasa_cre_salario^(65-Edad)
         antiguedad<-antiguedad+(65-Edad)
         Monto<-ultimo_salario * Multiplo(antiguedad)
-        Monto<-Monto*(1+tasa_descuento)^(65-Edad)
-        Monto<-Monto*pxt(ListaDeTablasHombres[[(Edad-1)]], Edad,t=(65-Edad))
+        Monto<-Monto*(1+tasa_descuento)^(-(65-Edad))
+        Monto<-Monto*pxt(ListaDeTablasHombres[[(Edad+1)]], x=Edad,t=(65-Edad))*(1+tasa_descuento)
     } else{
       ultimo_salario<-ultimo_salario*tasa_cre_salario^(62-Edad)
       antiguedad<-antiguedad+(62-Edad)
       Monto<-ultimo_salario * Multiplo(antiguedad)
-      Monto<-Monto*(1+tasa_descuento)^(62-Edad)
-      Monto<-Monto*pxt(ListaDeTablasMujeres[[(Edad-1)]], Edad,t=(62-Edad))
+      Monto<-Monto*(1+tasa_descuento)^(-(62-Edad))
+      Monto<-Monto*pxt(ListaDeTablasMujeres[[(Edad+1)]], x=Edad,t=(62-Edad))
     }
   return(Monto)
 }
-
 a<-NA
-
 for (i in 1:length(afil_mujeres$Antiguedad)) {
    a[i]<-SumaDeRetiroDetertinistico(afil_mujeres$Antiguedad[125],
     F ,
@@ -501,7 +610,6 @@ for (i in 1:length(afil_mujeres$Antiguedad)) {
   )
   i
 }
-
 ```
 
 
@@ -614,6 +722,8 @@ sum(montoMSumaDeRetiroDetertinistico)
 sum(MontoM)
 rm(afil_hombres, pen_hombres, afil_mujeres, pen_mujeres)
 ```
+
+
 
 
 
