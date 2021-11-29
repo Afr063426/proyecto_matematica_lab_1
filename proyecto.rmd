@@ -428,49 +428,28 @@ modelo_deterministico<-function(){
 ##No es un seguro de vida completo y necesita diferimiento
 PensionMensualDetertinistico <-
   function(Edad, hombre, antiguedad, ultimo_salario, tasa_descuento, tasa_cre_salario) {
+    
+    
+    # Edad=afil_hombres$Edad[1]
+    # hombre=T
+    # antiguedad=afil_hombres$Antiguedad[1]
+    # ultimo_salario=afil_hombres$DEVENGADO[1]
+    # tasa_descuento=0.06
+    # tasa_cre_salario=0.02
+  
+
     #Considerando una inflacion del 3%
     tasa_cre_salario<-(1+tasa_cre_salario)*(1+0.03)
+    v<-(1)/(1+tasa_descuento)
+    
     #anualidad
     # k=12, por se pagos mensuales
     # x=edad de la persona
-    if (hombre) {
-     #anualidad imnediata
-     vectorMensual<-(seq(1/12, (115-Edad), 1/12))
-     vectorAnualmensual<-sort(rep(c(0:(115-Edad-1)),12))
-     anualidad <-pxt(ListaDeTablasHombres[[(Edad+1)]], x=Edad,t=vectorMensual )*(1/(1+0.06))^(vectorMensual)
-     sum((1+0.03)^(vectorAnualmensual)*anualidad)
-     
-      # anualidadAcumulada <-1
-      # anualidad<-0
-      # for (k in vectorMensual) {
-      #   anualidad <-anualidad+ pxt(ListaDeTablasHombres[[(Edad+1)]], x=Edad,t=k )*(1/(1+0.06))^(k)* anualidadAcumulada
-      #   anualidadAcumulada <-anualidadAcumulada * (1+0.03)^(floor(k)==k)
-      # 
-      # }
-
-      # anualidad <-12*axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad,  i=tasa_descuento,  k = 12, m=max(65-Edad,0), payment="immediate" )
-      #
-```
-
-
-```{r}
-#llevar a futuro el salario
-      ultimo_salario<-ultimo_salario*tasa_cre_salario^(max(65-Edad,0))
-      antiguedad<-antiguedad+max(65-Edad,0)
-    } else{
-      vectorMensual<-(seq(1/12, (115-Edad), 1/12))
-      vectorAnualmensual<-sort(rep(c(0:(115-Edad-1)),12))
-      
-      anualidad <-pxt(ListaDeTablasMujeres[[(Edad+1)]], Edad,t=vectorMensual )*(1/(1+0.06))^(vectorMensual)
-      anualidad <-sum((1+0.03)^(vectorAnualmensual)*anualidad)
-        #llevar a futuro el salario
-        ultimo_salario<-ultimo_salario*tasa_cre_salario^(max(62-Edad,0))
-        antiguedad<-antiguedad+max(62-Edad,0)
-    }
     
-    #porcentaje de pensión
+      
+      #porcentaje de pensión
     porcentaje_de_pension <- function(antiguedad) {
-      por<-c((antiguedad > 10 & antiguedad <= 20) * 0.45 +
+      por<-c( (antiguedad > 10 & antiguedad <= 20) * 0.45 +
           (antiguedad > 20 & antiguedad <= 30) * 0.65 +
           (antiguedad > 30 & antiguedad <= 40) * 0.85 +
           (antiguedad > 40)
@@ -481,10 +460,28 @@ PensionMensualDetertinistico <-
       }
       return(por)
     }
+      
+      
+      
+    #Ajustamos el salario
+    ultimo_salario<-ultimo_salario*(tasa_cre_salario*v)^(max(65-Edad,0))
+    #Antiguedad al momento de pencionarse
+    antiguedad<-antiguedad+max(65-Edad,0)
+    #Porcentaje a conseguir
+    MontoAPagar<-porcentaje_de_pension(antiguedad) *  ultimo_salario
+ 
+    #anualidad imnediata
+    vectorMensual<-(seq(1/12, (115-Edad+1), 1/12))
+    vectorAnualmensual<-sort(rep(c(0:(115-Edad)),12))
     
+  
+    anualidad <-pxt(ListaDeTablasHombres[[(Edad+1)]], x=Edad,t=vectorMensual )
+    MontoAPagar <-MontoAPagar*(1+0.03)^(vectorAnualmensual)
+    suma<-sum(anualidad*(v)^(vectorMensual)*MontoAPagar)
+      
+
     
-    
-    return(porcentaje_de_pension(antiguedad) *  ultimo_salario * anualidad)
+    return( suma)
   }
 
 
@@ -544,7 +541,25 @@ SeguroVidaDetertinistico <- function(Edad, hombre) {
 ##No se está ajustando la antiguedad del afiliado
 #Se puede vectorizar esto con mapply y se hace más rápido,
 #podemos programar una funcion
+afil_hombres <- Afiliados_31_12_2020 %>% filter(SEXO == "M")
+pen_hombres <- Pensionados_31_12_2020 %>% filter(SEX == "M")
+
+
 montohPensionMensualDetertinistico <- numeric()
+
+for (i in 1:length( afil_hombres$Edad)) {
+  montohPensionMensualDetertinistico[i]<-
+    PensionMensualDetertinistico(
+    afil_hombres$Edad[i],
+    T,
+    afil_hombres$Antiguedad[i],
+    afil_hombres$DEVENGADO[i],
+    0.06,
+    0.02
+  )
+}
+sum(montohPensionMensualDetertinistico)
+
 montohSeguroVidaDetertinistico <- numeric()
 montohSumaDeRetiroDetertinistico <- numeric()
 Montoh <- numeric()
