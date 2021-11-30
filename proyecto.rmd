@@ -106,7 +106,7 @@ tiempo_pension<-floor(time_length(difftime(
 
 Pensionados_31_12_2020<-Pensionados_31_12_2020%>%mutate('Edad'=edad,'T_Pension'=tiempo_pension)
 
-
+#se crean bases de datos según genero
 afil_hombres <- Afiliados_31_12_2020 %>% filter(SEXO == "M")
 pen_hombres <- Pensionados_31_12_2020 %>% filter(SEX == "M")
 afil_mujeres <- Afiliados_31_12_2020 %>% filter(SEXO == "F")
