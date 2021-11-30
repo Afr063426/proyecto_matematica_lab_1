@@ -13,7 +13,7 @@ library(tidyverse)
 library(lubridate)
 library(readxl)
 library(kableExtra)
-
+library(xtable)
 library(stringr)
 library(xts)
 library(tinytex)
@@ -699,27 +699,27 @@ MontoSumaDeRetiroMujeresDeterministicoActivos <-
     aumentoSalarial
   )
 
-#calculo de Seguro Vida Detertinistico pensionados para mujeres
-MontoM <- mapply(SeguroVidaDetertinistico, pen_mujeres$Edad, T)
-sum(
-  montohPensionMensualDetertinistico,
-  montohSeguroVidaDetertinistico,
-  montohSumaDeRetiroDetertinistico,
-  Montoh,
-  montoMPensionMensualDetertinistico,
-  montoMSeguroVidaDetertinistico,
-  montoMSumaDeRetiroDetertinistico,
-  MontoM
-)
-sum(montohPensionMensualDetertinistico)
-sum(montohSeguroVidaDetertinistico)
-sum(montohSumaDeRetiroDetertinistico)
-sum(Montoh)
-sum(montoMPensionMensualDetertinistico)
-sum(montoMSeguroVidaDetertinistico)
-sum(montoMSumaDeRetiroDetertinistico)
-sum(MontoM)
-#rm(afil_hombres, pen_hombres, afil_mujeres, pen_mujeres)
+# #calculo de Seguro Vida Detertinistico pensionados para mujeres
+# MontoM <- mapply(SeguroVidaDeterministico, pen_mujeres$Edad, T)
+# sum(
+#   montohPensionMensualDetertinistico,
+#   montohSeguroVidaDetertinistico,
+#   montohSumaDeRetiroDetertinistico,
+#   Montoh,
+#   montoMPensionMensualDetertinistico,
+#   montoMSeguroVidaDetertinistico,
+#   montoMSumaDeRetiroDetertinistico,
+#   MontoM
+# )
+# sum(montohPensionMensualDetertinistico)
+# sum(montohSeguroVidaDetertinistico)
+# sum(montohSumaDeRetiroDetertinistico)
+# sum(Montoh)
+# sum(montoMPensionMensualDetertinistico)
+# sum(montoMSeguroVidaDetertinistico)
+# sum(montoMSumaDeRetiroDetertinistico)
+# sum(MontoM)
+# #rm(afil_hombres, pen_hombres, afil_mujeres, pen_mujeres)
 
 
 
@@ -819,148 +819,76 @@ Moises
 
 tasas <- c(seq(0.01,0.12,0.01))
 
+salarios <- c(seq(0,0.12,0.01))
 
-TestPensionh <- function(i){
- result <- mapply(
-    PensionMensualDetertinistico,
-    afil_hombres$Edad,
-    T,
-    afil_hombres$Antiguedad,
-    afil_hombres$DEVENGADO,
-    i,
-    0.02
-  )
- 
- suma <- sum(result)
-  
- return(suma)
+orden1 <- c(seq(2,24,2))
+
+orden2 <- c(seq(2,26,2))
+MontosDesc<-c()
+MontosSal <- c()
+CambioSal <- c()
+CambioTasa <- c()
+
+
+#Calculo de sensibilidad con respecto a la tasa
+MontoM <- mapply(CalculosDeterministicos, tasas,0.02 )
+
+for (i in orden1) {
+  MontosDesc[i/2]<-MontoM[[i]][11]
 }
 
-Ejemplo<-sapply(tasas,TestPensionh)
-
-TestRetiroh <- function(i){
- result <- mapply(
-    SumaDeRetiroDetertinistico,
-    afil_hombres$Antiguedad,
-    T ,
-    afil_hombres$Edad,
-    afil_hombres$DEVENGADO,
-    i,
-    0.02
-  )
- 
- suma <- sum(result)
-  
- return(suma)
-}
+Sensibilidadtasa <- data.frame(tasas,MontosDesc)
 
 
-TestPensionesM <- function(i){
- result <- mapply(
-    PensionMensualDetertinistico,
-    afil_mujeres$Edad,
-    T,
-    afil_mujeres$Antiguedad,
-    afil_mujeres$DEVENGADO,
-    i,
-    0.02
-  )
- 
- suma <- sum(result)
-  
- return(suma)
-}
+#Calculo de sensibilidad con respecto a los salarios
 
-TestRetiroM <- function(i){
- result <- mapply(
-    SumaDeRetiroDetertinistico,
-    afil_mujeres$Antiguedad,
-    F ,
-    afil_mujeres$Edad,
-    afil_mujeres$DEVENGADO,
-    i,
-    0.02
-  )
- 
- suma <- sum(result)
-  
- return(suma)
+MontoSalario <- mapply(CalculosDeterministicos, 0.06,salarios )
+
+for (i in orden2) {
+  MontosSal[i/2]<-MontoSalario[[i]][11]
 }
 
 
 
-PensionesH <- sapply(tasas,TestPensionh)
-
-PensionesM <- sapply(tasas,TestPensionesM)
-
-RetirosH <- sapply(tasas,TestRetiroh)
-
-RetirosM <- sapply(tasas,TestRetiroM)
-
-
-sensibilidad<- data.frame(tasas,PensionesH,PensionesM,RetirosH,RetirosM)
-
-ggplot(sensibilidad)+geom_line(aes(tasas,RetirosH))+geom_line(aes(tasas,RetirosM))
-
-#Calculo de PensionMensualDetertinistico para hombres
-montohPensionMensualDetertinistico <-
-  mapply(
-    PensionMensualDetertinistico,
-    afil_hombres$Edad,
-    T,
-    afil_hombres$Antiguedad,
-    afil_hombres$DEVENGADO,
-    0.06,
-    0.02
-  )
-#calculo de SeguroVida Detertinistico para hombres
-montohSeguroVidaDetertinistico <-
-  mapply(SeguroVidaDetertinistico, afil_hombres$Edad, T)
-#calculo de Retiro Deterministico para los afiliados para hombres
-montohSumaDeRetiroDetertinistico <-
-  mapply(
-    SumaDeRetiroDetertinistico,
-    afil_hombres$Antiguedad,
-    T ,
-    afil_hombres$Edad,
-    afil_hombres$DEVENGADO,
-    0.06,
-    0.02
-  )
-#calculo de Seguro Vida Detertinistico pensionados para hombres
-Montoh <- mapply(SeguroVidaDetertinistico, pen_hombres$Edad, T)
-afil_mujeres <- Afiliados_31_12_2020 %>% filter(SEXO == "F")
-afil_mujeres <- afil_mujeres %>% filter(Edad <= 62)
+for (j in 1:11) {
+  
+  CambioTasa[j+1]<- (MontosDesc[j+1]-MontosDesc[j])/MontosDesc[j]
+  
+}
+CambioTasa[1]=0
 
 
-pen_mujeres <- Pensionados_31_12_2020 %>% filter(SEX == "F")
-#Calculo de PensionMensualDetertinistico para mujeres
-montoMPensionMensualDetertinistico <-
-  mapply(
-    PensionMensualDetertinistico,
-    afil_mujeres$Edad,
-    T,
-    afil_mujeres$Antiguedad,
-    afil_mujeres$DEVENGADO,
-    0.06,
-    0.02
-  )
-#calculo de SeguroVida Detertinistico para mujeres
-montoMSeguroVidaDetertinistico <-
-  mapply(SeguroVidaDetertinistico, afil_mujeres$Edad, F)
-#calculo de Retiro Deterministico para los afiliados para mujeres
-montoMSumaDeRetiroDetertinistico <-
-  mapply(
-    SumaDeRetiroDetertinistico,
-    afil_mujeres$Antiguedad,
-    F ,
-    afil_mujeres$Edad,
-    afil_mujeres$DEVENGADO,
-    0.06,
-    0.02
-  )
-#calculo de Seguro Vida Detertinistico pensionados para mujeres
-MontoM <- mapply(SeguroVidaDetertinistico, pen_mujeres$Edad, T)
+for (j in 1:12) {
+  
+  CambioSal[j+1]<- (MontosSal[j+1]-MontosSal[j])/MontosSal[j]
+  
+}
+CambioSal[1]=0
+
+
+SensibilidadSalario <- data.frame(salarios,MontosSal,CambioSal)
+
+
+Sensibilidadtasa <- data.frame(tasas,MontosDesc,CambioTasa)
+
+
+print(xtable(Sensibilidadtasa, type = "latex", tabular.environment="longtable"),include.rownames=FALSE, file = "TablaSensiblidadTasa.tex")
+
+print(xtable(SensibilidadSalario, type = "latex", tabular.environment="longtable"),include.rownames=FALSE, file = "TablaSensiblidadSalario.tex")
+
+
+#Graficos
+
+ggplot(Sensibilidadtasa)+geom_line(aes(tasas,MontosDesc))+theme(panel.grid = element_blank(),panel.background = element_blank(),axis.line = element_line(colour = "black") )+scale_x_continuous(breaks = seq(0.01,0.12,0.01),labels=c(seq(0.01,0.12,0.01)), limits = c(0.01,0.13))+labs(y = "Costo",
+       x = "Tasas de descuento",
+       title = "Sensibilidad del costo a distintas tasas de descuento")+theme(plot.title = element_text(hjust = .5),plot.caption = element_text(hjust = 0))
+
+ggplot(SensibilidadSalario)+geom_line(aes(salarios,MontosSal))+theme(panel.grid = element_blank(),panel.background = element_blank(),axis.line = element_line(colour = "black") )+scale_x_continuous(breaks = seq(0,0.12,0.01),labels=c(seq(0,0.12,0.01)), limits = c(0,0.13))+labs(y = "Costo",
+       x = "Tasa de crecimiento de salarios",
+       title = "Sensibilidad del costo a distintas tasas de crecimiento de salarios")+theme(plot.title = element_text(hjust = .5),plot.caption = element_text(hjust = 0))
+
+
+
 
 
 ```
