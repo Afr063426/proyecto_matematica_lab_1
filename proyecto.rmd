@@ -128,6 +128,11 @@ Afiliados_31_12_2020 <- read_excel("Afiliados_31_12_2020.xlsx") %>%
 Pensionados_31_12_2020 <- read_excel("Pensionados_31_12_2020.xlsx") %>%
   mutate(FEC_NAC = ymd(FEC_NAC),
          edad = floor(lubridate::time_length(difftime(today(), FEC_NAC), "years")))
+Pensionados_31_12_2020
+```
+
+
+```{r}
 tblPrint <- function(tbl, cap = NULL){
     tbl %>%  kbl(caption = cap) %>%
   kable_styling(bootstrap_options = c("striped", "condensed"),
@@ -171,39 +176,32 @@ pobAfi %>% ggplot(aes(x=edad, y=Porcentaje, fill=SEXO)) +
 
 
 
+```{r}
+pen <- Pensionados_31_12_2020 %>% mutate(
+  SEXO = as.factor(SEX),
+  edad = as.factor(edad)
+)
+
+pobPen <- pen %>% group_by(edad, SEX)%>%
+  summarize(Cantidad =  n())
+
+n <- sum(pobPen$Cantidad[pobPen$SEX=="M"])
+m <- sum(pobPen$Cantidad[pobPen$SEX=="F"])
 
 
+pobPen$Cantidad[pobPen$SEX == "M"] <- -pobPen$Cantidad
 
+pobPen$Cantidad[pobPen$SEX=="M"] <-
+  pobPen$Cantidad[pobPen$SEX=="M"]/n
+pobPen$Cantidad[pobPen$SEX=="F"] <-
+  pobPen$Cantidad[pobPen$SEX=="F"]/m
+colnames(pobPen)[3] <- "Porcentaje"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+pobPen %>% ggplot(aes(x=edad, y=Porcentaje, fill=SEX)) +
+  geom_bar(stat="identity") +
+  coord_flip()+
+  theme_minimal()+labs(title="Pensionados 31 de diciembre 2020")
+```
 
 
 
