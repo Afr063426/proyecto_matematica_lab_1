@@ -33,6 +33,8 @@ TablaDinamica_lxsMujeres <- as.data.frame(read_excel("TablaDinamica-lxs.xls",
 
 
 
+
+
 #Se genera lista con las tablas de los hombres
 
 ListaDeTablasHombres <- list()
