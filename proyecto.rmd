@@ -112,8 +112,11 @@ pen_hombres <- Pensionados_31_12_2020 %>% filter(SEX == "M")
 afil_mujeres <- Afiliados_31_12_2020 %>% filter(SEXO == "F")
 pen_mujeres <- Pensionados_31_12_2020 %>% filter(SEX == "F")
 
+<<<<<<< HEAD
+=======
 
 
+>>>>>>> e3d728986bdfc6daf4d93c111d330970cca6fdf2
 ```
 
 
@@ -429,6 +432,7 @@ lump_sum_st<-function(base_de_datos,t_descuento,simulaciones,inflacion,aumento_r
 }
 
 
+
 ```
 
 
@@ -492,7 +496,6 @@ write.table(calculo_prueba,file="prueba.txt",sep="")
 ```{r}
 # PensionMensualDeterministico
 ##No es un seguro de vida completo y necesita diferimiento
-
 PensionMensualDeterministico <-
   function(Edad, hombre, antiguedad1, ultimo_salario, tasa_descuento, tasa_cre_salario) {
   
@@ -514,18 +517,24 @@ PensionMensualDeterministico <-
       return(por)
     }
       
-    if(hombre){
-      
     #Ajustamos el salario
     ultimo_salario1<-ultimo_salario*(tasa_cre_salario*v)^(max(65-Edad,0))
     #Antiguedad al momento de pencionarse
     MontoAPagar<-porcentaje_de_pension(antiguedad1+max(65-Edad,0)) *ultimo_salario1
+    if(hombre){
+      if(antiguedad1==-1){
+        survive<-1
+        l<-Edad
+      }else{
+        survive<-pxt(ListaDeTablasHombres[[(Edad+1)]], x=Edad,t=max(65-Edad,0))
+        l<-Edad
+        Edad<-Edad+max(65-Edad,0)
+      }
  
     #anualidad imnediata
     vectorMensual<-(seq(1/12, (115-Edad+1), 1/12))
     vectorAnualmensual<-sort(rep(c(0:(115-Edad)),12))
-
-    anualidad <-pxt(ListaDeTablasHombres[[(Edad+1)]], x=Edad,t=vectorMensual )*(v)^(vectorMensual)
+    anualidad <-pxt(ListaDeTablasHombres[[(l+1)]], x=Edad,t=vectorMensual )*(v)^(vectorMensual)
     #monto a pagar con ajuste inflacionario
     MontoAPagar <-MontoAPagar*(1+0.03)^(vectorAnualmensual)
     suma<-anualidad*MontoAPagar
@@ -535,12 +544,19 @@ PensionMensualDeterministico <-
     ultimo_salario1<-ultimo_salario*(tasa_cre_salario*v)^(max(62-Edad,0))
     #Antiguedad al momento de pencionarse
     MontoAPagar<-porcentaje_de_pension(antiguedad1+ max(62-Edad,0)) *  ultimo_salario1
+      if(antiguedad1==-1){
+        survive<-1
+        l<-Edad
+      }else{
+        survive<-pxt(ListaDeTablasMujeres[[(Edad+1)]], x=Edad,t=max(62-Edad,0))
+        l<-Edad
+        Edad<-Edad+max(62-Edad,0)
+      }
  
     #anualidad imnediata
     vectorMensual<-(seq(1/12, (115-Edad+1), 1/12))
     vectorAnualmensual<-sort(rep(c(0:(115-Edad)),12))
-
-    anualidad <-pxt(ListaDeTablasMujeres[[(Edad+1)]], x=Edad,t=vectorMensual )*(v)^(vectorMensual)
+    anualidad <-pxt(ListaDeTablasMujeres[[(l+1)]], x=Edad,t=vectorMensual )*(v)^(vectorMensual)
     #monto a pagar con ajuste inflacionario
     MontoAPagar <-MontoAPagar*(1+0.03)^(vectorAnualmensual)
     suma<-anualidad*MontoAPagar
@@ -549,7 +565,7 @@ PensionMensualDeterministico <-
     suma<-sum(suma)
     
   
-    return(suma)
+    return(suma*survive)
 }
 ```
 
@@ -617,13 +633,9 @@ SeguroVidaDeterministico <- function(Edad, hombre) {
 
 ```{r}
 #Costo deterministico
-
-
 CalculosDeterministicos <- function(Descuento, aumentoSalarial) {
   
 #hombres
-
-
 #Calculo de PensionMensualDeterministico para hombres
 MontoDePensionMensualParaHombresDeterministicoActivos <-
   mapply(
@@ -652,7 +664,6 @@ MontoSumaDeRetiroHombresDeterministicoActivos <-
 #calculo de Seguro Vida Deterministico pensionados para hombres
 MontoDeSeguroVidaParaHombresDeterministicoPensionados <-
   mapply(SeguroVidaDeterministico, pen_hombres$Edad, TRUE)
-
 #calculo de pension para hombres pensionados
 MontoDePensionMensualParaHombresDeterministicoPensionados <-
   mapply(
@@ -663,11 +674,7 @@ MontoDePensionMensualParaHombresDeterministicoPensionados <-
     Descuento,
     aumentoSalarial
   )
-
-
 #Calculo para mujeres
-
-
 #Calculo de PensionMensualDeterministico para mujeres
 MontoDePensionMensualParaMujeresDeterministicoActivos <-
   mapply(
@@ -679,14 +686,9 @@ MontoDePensionMensualParaMujeresDeterministicoActivos <-
     Descuento,
     aumentoSalarial
   )
-
-
-
-
 #calculo de SeguroVida Deterministico para mujeres
 MontoDeSeguroVidaParaMujeresDeterministicoActivos <-
   mapply(SeguroVidaDeterministico, afil_mujeres$Edad, FALSE)
-
 #calculo de Retiro Deterministico para los afiliados para mujeres
 MontoSumaDeRetiroMujeresDeterministicoActivos <-
   mapply(
@@ -698,7 +700,6 @@ MontoSumaDeRetiroMujeresDeterministicoActivos <-
     Descuento,
     aumentoSalarial
   )
-
 # #calculo de Seguro Vida Detertinistico pensionados para mujeres
 # MontoM <- mapply(SeguroVidaDeterministico, pen_mujeres$Edad, T)
 # sum(
@@ -720,9 +721,6 @@ MontoSumaDeRetiroMujeresDeterministicoActivos <-
 # sum(montoMSumaDeRetiroDetertinistico)
 # sum(MontoM)
 # #rm(afil_hombres, pen_hombres, afil_mujeres, pen_mujeres)
-
-
-
 #calculo de Seguro Vida Deterministico pensionados para mujeres
 MontoDeSeguroVidaParaMujeresDeterministicoPensionados <-
   mapply(SeguroVidaDeterministico, pen_mujeres$Edad, FALSE)
@@ -735,7 +733,6 @@ MontoDePensionMensualParaMujeresDeterministicoPensionados <-
     Descuento,
     aumentoSalarial
   )
-
 TablamontosDeterministicos <-
   data.frame(
     "Monto"=c(
@@ -776,20 +773,9 @@ TablamontosDeterministicos <-
       )
     )
   )
-
-
-
 return( TablamontosDeterministicos)
-
 }
-
-
-
-
 TablamontosDeterministicos<-CalculosDeterministicos(0.06,0.02)
-
-
-
 ```
 
 
@@ -892,9 +878,6 @@ Grafico <- c()
 
 
 ```
-
-
-
 
 
 
