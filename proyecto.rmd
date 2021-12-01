@@ -696,27 +696,7 @@ MontoSumaDeRetiroMujeresDeterministicoActivos <-
     Descuento,
     aumentoSalarial
   )
-# #calculo de Seguro Vida Detertinistico pensionados para mujeres
-# MontoM <- mapply(SeguroVidaDeterministico, pen_mujeres$Edad, T)
-# sum(
-#   montohPensionMensualDetertinistico,
-#   montohSeguroVidaDetertinistico,
-#   montohSumaDeRetiroDetertinistico,
-#   Montoh,
-#   montoMPensionMensualDetertinistico,
-#   montoMSeguroVidaDetertinistico,
-#   montoMSumaDeRetiroDetertinistico,
-#   MontoM
-# )
-# sum(montohPensionMensualDetertinistico)
-# sum(montohSeguroVidaDetertinistico)
-# sum(montohSumaDeRetiroDetertinistico)
-# sum(Montoh)
-# sum(montoMPensionMensualDetertinistico)
-# sum(montoMSeguroVidaDetertinistico)
-# sum(montoMSumaDeRetiroDetertinistico)
-# sum(MontoM)
-# #rm(afil_hombres, pen_hombres, afil_mujeres, pen_mujeres)
+
 #calculo de Seguro Vida Deterministico pensionados para mujeres
 MontoDeSeguroVidaParaMujeresDeterministicoPensionados <-
   mapply(SeguroVidaDeterministico, pen_mujeres$Edad, FALSE)
@@ -771,7 +751,26 @@ TablamontosDeterministicos <-
   )
 return( TablamontosDeterministicos)
 }
-TablamontosDeterministicos<-CalculosDeterministicos(0.06,0.02)
+
+
+
+
+TablamontosDeterministicos<-CalculosDeterministicos(0.06504,0.02)
+
+
+
+
+
+
+#TablamontosDeterministicos$Deterministico[11]*0.15 = 64619604215,
+#430797361435
+
+
+
+
+
+366177757220-TablamontosDeterministicos$Deterministico[11]
+
 ```
 
 
