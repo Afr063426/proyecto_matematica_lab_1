@@ -888,7 +888,7 @@ ggplot(SensibilidadSalario)+geom_line(aes(salarios,MontosSal))+theme(panel.grid 
        title = "Sensibilidad del costo a distintas tasas de crecimiento de salarios")+theme(plot.title = element_text(hjust = .5),plot.caption = element_text(hjust = 0))
 
 
-
+Grafico <- c()
 
 
 ```
