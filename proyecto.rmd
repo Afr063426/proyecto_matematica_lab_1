@@ -112,11 +112,7 @@ pen_hombres <- Pensionados_31_12_2020 %>% filter(SEX == "M")
 afil_mujeres <- Afiliados_31_12_2020 %>% filter(SEXO == "F")
 pen_mujeres <- Pensionados_31_12_2020 %>% filter(SEX == "F")
 
-<<<<<<< HEAD
-=======
 
-
->>>>>>> e3d728986bdfc6daf4d93c111d330970cca6fdf2
 ```
 
 
@@ -613,7 +609,7 @@ SeguroVidaDeterministico <- function(Edad, hombre) {
     #diferido
     return(2000000 * Axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad, n=(65-Edad)) +  1000000 * Axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad, m=(65-Edad)))
   } else if (Edad < 62 & !hombre) {
-    return(2000000 * Axn(ListaDeTablasMujeres[[(Edad + 1)]], x = Edad, n=(65-Edad)) +  1000000 * Axn(ListaDeTablasMujeres[[(Edad + 1)]], x = Edad, m=(65-Edad)))
+    return(2000000 * Axn(ListaDeTablasMujeres[[(Edad + 1)]], x = Edad, n=(62-Edad)) +  1000000 * Axn(ListaDeTablasMujeres[[(Edad + 1)]], x = Edad, m=(62-Edad)))
   }
 }
 ```
@@ -700,27 +696,7 @@ MontoSumaDeRetiroMujeresDeterministicoActivos <-
     Descuento,
     aumentoSalarial
   )
-# #calculo de Seguro Vida Detertinistico pensionados para mujeres
-# MontoM <- mapply(SeguroVidaDeterministico, pen_mujeres$Edad, T)
-# sum(
-#   montohPensionMensualDetertinistico,
-#   montohSeguroVidaDetertinistico,
-#   montohSumaDeRetiroDetertinistico,
-#   Montoh,
-#   montoMPensionMensualDetertinistico,
-#   montoMSeguroVidaDetertinistico,
-#   montoMSumaDeRetiroDetertinistico,
-#   MontoM
-# )
-# sum(montohPensionMensualDetertinistico)
-# sum(montohSeguroVidaDetertinistico)
-# sum(montohSumaDeRetiroDetertinistico)
-# sum(Montoh)
-# sum(montoMPensionMensualDetertinistico)
-# sum(montoMSeguroVidaDetertinistico)
-# sum(montoMSumaDeRetiroDetertinistico)
-# sum(MontoM)
-# #rm(afil_hombres, pen_hombres, afil_mujeres, pen_mujeres)
+
 #calculo de Seguro Vida Deterministico pensionados para mujeres
 MontoDeSeguroVidaParaMujeresDeterministicoPensionados <-
   mapply(SeguroVidaDeterministico, pen_mujeres$Edad, FALSE)
@@ -775,7 +751,17 @@ TablamontosDeterministicos <-
   )
 return( TablamontosDeterministicos)
 }
-TablamontosDeterministicos<-CalculosDeterministicos(0.06,0.02)
+
+
+
+
+TablamontosDeterministicos<-CalculosDeterministicos(0.06504,0.02)
+
+
+#TablamontosDeterministicos$Deterministico[11]*0.15 = 64619604215,
+#430797361435
+366177757220-TablamontosDeterministicos$Deterministico[11]
+
 ```
 
 
