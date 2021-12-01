@@ -112,11 +112,7 @@ pen_hombres <- Pensionados_31_12_2020 %>% filter(SEX == "M")
 afil_mujeres <- Afiliados_31_12_2020 %>% filter(SEXO == "F")
 pen_mujeres <- Pensionados_31_12_2020 %>% filter(SEX == "F")
 
-<<<<<<< HEAD
-=======
 
-
->>>>>>> e3d728986bdfc6daf4d93c111d330970cca6fdf2
 ```
 
 
@@ -613,7 +609,7 @@ SeguroVidaDeterministico <- function(Edad, hombre) {
     #diferido
     return(2000000 * Axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad, n=(65-Edad)) +  1000000 * Axn(ListaDeTablasHombres[[(Edad + 1)]], x = Edad, m=(65-Edad)))
   } else if (Edad < 62 & !hombre) {
-    return(2000000 * Axn(ListaDeTablasMujeres[[(Edad + 1)]], x = Edad, n=(65-Edad)) +  1000000 * Axn(ListaDeTablasMujeres[[(Edad + 1)]], x = Edad, m=(65-Edad)))
+    return(2000000 * Axn(ListaDeTablasMujeres[[(Edad + 1)]], x = Edad, n=(62-Edad)) +  1000000 * Axn(ListaDeTablasMujeres[[(Edad + 1)]], x = Edad, m=(62-Edad)))
   }
 }
 ```
@@ -853,10 +849,11 @@ CambioSal[1]=0
 
 
 SensibilidadSalario <- data.frame(salarios,MontosSal,CambioSal)
+colnames(SensibilidadSalario) <- c("Tasa de Salarios","Monto","Cambio")
 
 
 Sensibilidadtasa <- data.frame(tasas,MontosDesc,CambioTasa)
-
+colnames(Sensibilidadtasa) <- c("Tasa de descuento","Monto","Cambio")
 
 print(xtable(Sensibilidadtasa, type = "latex", tabular.environment="longtable"),include.rownames=FALSE, file = "TablaSensiblidadTasa.tex")
 
@@ -874,8 +871,7 @@ ggplot(SensibilidadSalario)+geom_line(aes(salarios,MontosSal))+theme(panel.grid 
        title = "Sensibilidad del costo a distintas tasas de crecimiento de salarios")+theme(plot.title = element_text(hjust = .5),plot.caption = element_text(hjust = 0))
 
 
-Grafico <- c()
-
+#Cambio
 
 ```
 
