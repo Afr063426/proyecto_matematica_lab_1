@@ -758,8 +758,17 @@ return( TablamontosDeterministicos)
 TablamontosDeterministicos<-CalculosDeterministicos(0.06504,0.02)
 
 
+
+
+
+
 #TablamontosDeterministicos$Deterministico[11]*0.15 = 64619604215,
 #430797361435
+
+
+
+
+
 366177757220-TablamontosDeterministicos$Deterministico[11]
 
 ```
