@@ -846,13 +846,15 @@ for (j in 1:12) {
 }
 CambioSal[1]=0
 
+MontosSal2<- MontosSal/1000000
+MontosDesc2 <- MontosDesc/1000000
 
-SensibilidadSalario <- data.frame(salarios,MontosSal,CambioSal)
-colnames(SensibilidadSalario) <- c("Tasa de Salarios","Monto","Cambio")
+SensibilidadSalario <- data.frame(salarios,MontosSal2,CambioSal)
+colnames(SensibilidadSalario) <- c("Tasa de Salarios","Monto (Millones CRC)","Cambio")
 
 
-Sensibilidadtasa <- data.frame(tasas,MontosDesc,CambioTasa)
-colnames(Sensibilidadtasa) <- c("Tasa de descuento","Monto","Cambio")
+Sensibilidadtasa <- data.frame(tasas,MontosDesc2,CambioTasa)
+colnames(Sensibilidadtasa) <- c("Tasa de descuento","Monto (Millones CRC)","Cambio")
 
 print(xtable(Sensibilidadtasa, type = "latex", tabular.environment="longtable"),include.rownames=FALSE, file = "TablaSensiblidadTasa.tex")
 
@@ -861,13 +863,13 @@ print(xtable(SensibilidadSalario, type = "latex", tabular.environment="longtable
 
 #Graficos
 
-ggplot(Sensibilidadtasa)+geom_line(aes(tasas,MontosDesc))+theme(panel.grid = element_blank(),panel.background = element_blank(),axis.line = element_line(colour = "black") )+scale_x_continuous(breaks = seq(0.01,0.12,0.01),labels=c(seq(0.01,0.12,0.01)), limits = c(0.01,0.13))+labs(y = "Costo",
+ggplot(Sensibilidadtasa)+geom_line(aes(tasas,MontosDesc2))+theme(panel.grid = element_blank(),panel.background = element_blank(),axis.line = element_line(colour = "black") )+scale_x_continuous(breaks = seq(0.01,0.12,0.01),labels=c(seq(0.01,0.12,0.01)), limits = c(0.01,0.13))+labs(y = "Costo",
        x = "Tasas de descuento",
-       title = "Sensibilidad del costo a distintas tasas de descuento")+theme(plot.title = element_text(hjust = .5),plot.caption = element_text(hjust = 0))
+       title = "Sensibilidad del costo a distintas tasas de descuento")+theme(plot.title = element_text(hjust = .5),plot.caption = element_text(hjust = 0))+theme_minimal()
 
-ggplot(SensibilidadSalario)+geom_line(aes(salarios,MontosSal))+theme(panel.grid = element_blank(),panel.background = element_blank(),axis.line = element_line(colour = "black") )+scale_x_continuous(breaks = seq(0,0.12,0.01),labels=c(seq(0,0.12,0.01)), limits = c(0,0.13))+labs(y = "Costo",
+ggplot(SensibilidadSalario)+geom_line(aes(salarios,MontosSal2))+theme(panel.grid = element_blank(),panel.background = element_blank(),axis.line = element_line(colour = "black") )+scale_x_continuous(breaks = seq(0,0.12,0.01),labels=c(seq(0,0.12,0.01)), limits = c(0,0.13))+labs(y = "Costo",
        x = "Tasa de crecimiento de salarios",
-       title = "Sensibilidad del costo a distintas tasas de crecimiento de salarios")+theme(plot.title = element_text(hjust = .5),plot.caption = element_text(hjust = 0))
+       title = "Sensibilidad del costo a distintas tasas de crecimiento de salarios")+theme(plot.title = element_text(hjust = .5),plot.caption = element_text(hjust = 0))+theme_minimal()
 
 
 #Cambio
