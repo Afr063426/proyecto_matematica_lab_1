@@ -800,6 +800,8 @@ Moises
 
 ##Análisis de Sensibilidad
 
+#Algunos vectores iniciales necesarios
+
 tasas <- c(seq(0.01,0.12,0.01))
 
 salarios <- c(seq(0,0.12,0.01))
@@ -848,9 +850,11 @@ for (j in 1:12) {
 }
 CambioSal[1]=0
 
+#Reescalamiento de los montos antes de generar los gráficos y tablas
 MontosSal2<- MontosSal/1000000
 MontosDesc2 <- MontosDesc/1000000
 
+#Generacion de las tablas con los cambios
 SensibilidadSalario <- data.frame(salarios,MontosSal2,CambioSal)
 colnames(SensibilidadSalario) <- c("Tasa de Salarios","Monto (Millones CRC)","Cambio")
 
@@ -865,10 +869,14 @@ print(xtable(SensibilidadSalario, type = "latex", tabular.environment="longtable
 
 #Graficos
 
+#Grafico de las tasas de descuento
+
 ggplot(Sensibilidadtasa)+geom_line(aes(tasas,MontosDesc2))+theme(panel.grid = element_blank(),panel.background = element_blank(),axis.line = element_line(colour = "black") )+scale_x_continuous(breaks = seq(0.01,0.12,0.01),labels=c(seq(0.01,0.12,0.01)), limits = c(0.01,0.13))+labs(y = "Costo",
        x = "Tasas de descuento",
        title = "Sensibilidad del costo a distintas tasas de descuento")+theme(plot.title = element_text(hjust = .5),plot.caption = element_text(hjust = 0))+theme_minimal()
 
+
+#Grafico del crecimiento de los salarios
 ggplot(SensibilidadSalario)+geom_line(aes(salarios,MontosSal2))+theme(panel.grid = element_blank(),panel.background = element_blank(),axis.line = element_line(colour = "black") )+scale_x_continuous(breaks = seq(0,0.12,0.01),labels=c(seq(0,0.12,0.01)), limits = c(0,0.13))+labs(y = "Costo",
        x = "Tasa de crecimiento de salarios",
        title = "Sensibilidad del costo a distintas tasas de crecimiento de salarios")+theme(plot.title = element_text(hjust = .5),plot.caption = element_text(hjust = 0))+theme_minimal()
